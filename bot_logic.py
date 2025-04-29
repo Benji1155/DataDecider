@@ -8,7 +8,7 @@ import nltk
 from nltk.stem import WordNetLemmatizer
 
 # Load your trained model and related files
-model = load_model('model.h5')  # adjust path if needed
+model = load_model('chatbot_model.h5')  # adjust path if needed
 with open('intents.json') as file:
     intents = json.load(file)
 
