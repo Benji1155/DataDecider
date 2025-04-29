@@ -5,4 +5,5 @@ nltk
 numpy
 pandas
 h5py
+spacy
 scikit-learn

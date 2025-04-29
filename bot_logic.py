@@ -6,6 +6,7 @@ import nltk
 import pickle
 from nltk.stem import WordNetLemmatizer
 from tensorflow.keras.models import load_model
+import spacy
 
 # Ensure 'punkt' is available
 try:
@@ -27,9 +28,12 @@ with open('intents.json') as file:
 lemmatizer = WordNetLemmatizer()
 
 # Clean and preprocess user input
+# Load the spaCy English model
+nlp = spacy.load("en_core_web_sm")
+
 def clean_up_sentence(sentence):
-    sentence_words = sentence.split()  # Simple whitespace split
-    sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
+    sentence_words = sentence.split()  # Tokenize by space
+    sentence_words = [nlp(word)[0].lemma_ for word in sentence_words]  # Lemmatize using spaCy
     return sentence_words
 
 # Create bag-of-words from sentence
