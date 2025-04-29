@@ -7,6 +7,12 @@ import pickle
 from nltk.stem import WordNetLemmatizer
 from tensorflow.keras.models import load_model
 
+# Ensure 'punkt' is available
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+
 # Load trained model
 model = load_model('chatbot_model.h5')
 
