@@ -2,42 +2,6 @@ from flask import Flask, render_template, request, jsonify
 from bot_logic import get_bot_response
 from werkzeug.utils import secure_filename
 import os
-from flask import jsonify, request
-import pandas as pd
-import os
-from werkzeug.utils import secure_filename
-
-@app.route("/upload_file", methods=["POST"])
-def upload_file():
-    if "file" not in request.files:
-        return jsonify({"response": "No file uploaded."}), 400
-
-    file = request.files["file"]
-
-    if file.filename == "":
-        return jsonify({"response": "No file selected."}), 400
-
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
-        try:
-            if filename.endswith(".csv"):
-                df = pd.read_csv(filepath)
-            else:
-                df = pd.read_excel(filepath)
-
-            preview_html = df.head(5).to_html(classes="preview-table", index=False)
-            return jsonify({
-                "response": f"Thanks! Your dataset <strong>{filename}</strong> has been received and is ready for analysis.",
-                "preview": preview_html
-            })
-        except Exception as e:
-            return jsonify({"response": f"File saved, but failed to preview the data: {str(e)}"}), 500
-
-    else:
-        return jsonify({"response": "Please upload a CSV or Excel file (.csv, .xls, .xlsx)."}), 400
 
 app = Flask(__name__)
 
@@ -73,9 +37,22 @@ def upload_file():
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-        return jsonify({"response": "Thanks for uploading your data! It's saved and ready for analysis."})
-    else:
-        return jsonify({"response": "Please upload a CSV or Excel file (.csv, .xls, .xlsx)."}), 400
+
+        try:
+            if filename.endswith(".csv"):
+                df = pd.read_csv(filepath)
+            else:
+                df = pd.read_excel(filepath)
+
+            preview_html = df.head(5).to_html(classes="preview-table", index=False, border=0)
+            return jsonify({
+                "response": f"Thanks! Your dataset <strong>{filename}</strong> has been received and is ready for analysis.",
+                "preview": preview_html
+            })
+        except Exception as e:
+            return jsonify({"response": f"File saved, but failed to preview the data: {str(e)}"}), 500
+
+    return jsonify({"response": "Please upload a CSV or Excel file (.csv, .xls, .xlsx)."}), 400
 
 if __name__ == "__main__":
     app.run(debug=True)
