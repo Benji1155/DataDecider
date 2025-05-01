@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from bot_logic import get_bot_response
 from werkzeug.utils import secure_filename
 import os
+import pandas as pd
 
 app = Flask(__name__)
 
