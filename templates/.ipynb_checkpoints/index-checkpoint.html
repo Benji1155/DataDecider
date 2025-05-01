@@ -9,6 +9,7 @@
 </head>
 <body>
   <div class="chat-container">
+    <!-- Chat messages area -->
     <div class="chat-messages" id="chat-box">
       <div class="chat-message bot-message">
         <div class="avatar"><i class="fas fa-robot"></i></div>
@@ -18,154 +19,148 @@
       </div>
     </div>
 
-    <div class="suggestions">
-      <button class="suggestion-btn">Auto-Mode</button>
-      <button class="suggestion-btn">Help Select Statistical Tests</button>
-      <button class="suggestion-btn">Help Select Visualizations</button>
-      <button class="suggestion-btn">I'm Not Sure</button>
-    </div>
+    <!-- Suggestions and input area -->
+    <div class="chat-bottom">
+      <div class="suggestions">
+        <button class="suggestion-btn">Auto-Mode</button>
+        <button class="suggestion-btn">Help Select Statistical Tests</button>
+        <button class="suggestion-btn">Help Select Visualizations</button>
+        <button class="suggestion-btn">I'm Not Sure</button>
+      </div>
 
-    <div class="chat-input">
-      <label for="file-upload" class="file-upload-label">
-        Upload Data
-        <input type="file" id="file-upload" name="file-upload" accept=".csv, .xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats officedocument.spreadsheetml.sheet" />
-      </label>
-      <input type="text" id="message-input" placeholder="Type your message..." />
-      <button id="send-button">Send</button>
+      <div class="chat-input">
+        <label for="file-upload" class="file-upload-label">
+          Upload Data
+          <input type="file" id="file-upload" name="file-upload" accept=".csv, .xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        </label>
+        <input type="text" id="message-input" placeholder="Type your message..." />
+        <button id="send-button">Send</button>
+      </div>
     </div>
   </div>
 
-    <script>
-      async function sendMessage(message = null) {
-        const inputBox = document.getElementById("message-input");
-        const chatBox = document.getElementById("chat-box");
-        const sendButton = document.getElementById("send-button");
-        const suggestionButtons = document.querySelectorAll(".suggestion-btn");
-        const fileUpload = document.getElementById("file-upload");
-    
-        const userMessage = message || inputBox.value.trim();
-        if (!userMessage) return;
-        inputBox.value = "";
-    
-        // Disable inputs
-        inputBox.disabled = true;
-        sendButton.disabled = true;
-        fileUpload.disabled = true;
-        suggestionButtons.forEach(btn => btn.disabled = true);
-    
-        // Show user message and loading indicator
-        chatBox.innerHTML += `
-          <div class="chat-message user-message">
-            <div class="avatar"><i class="fas fa-user"></i></div>
-            <div class="message-bubble"><p>${userMessage}</p></div>
+  <!-- JavaScript -->
+  <script>
+    async function sendMessage(message = null) {
+      const inputBox = document.getElementById("message-input");
+      const chatBox = document.getElementById("chat-box");
+      const sendButton = document.getElementById("send-button");
+      const suggestionButtons = document.querySelectorAll(".suggestion-btn");
+      const fileUpload = document.getElementById("file-upload");
+
+      const userMessage = message || inputBox.value.trim();
+      if (!userMessage) return;
+      inputBox.value = "";
+
+      inputBox.disabled = true;
+      sendButton.disabled = true;
+      fileUpload.disabled = true;
+      suggestionButtons.forEach(btn => btn.disabled = true);
+
+      chatBox.innerHTML += `
+        <div class="chat-message user-message">
+          <div class="avatar"><i class="fas fa-user"></i></div>
+          <div class="message-bubble"><p>${userMessage}</p></div>
+        </div>
+        <div class="chat-message bot-message loading" id="loading-indicator">
+          <div class="avatar"><i class="fas fa-robot"></i></div>
+          <div class="message-bubble"><p class="dots">...</p></div>
+        </div>
+      `;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      const res = await fetch("/get_response", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage })
+      });
+
+      const data = await res.json();
+      const botReply = data.response;
+
+      const loadingEl = document.getElementById("loading-indicator");
+      if (loadingEl) loadingEl.remove();
+
+      chatBox.innerHTML += `
+        <div class="chat-message bot-message">
+          <div class="avatar"><i class="fas fa-robot"></i></div>
+          <div class="message-bubble"><p>${botReply}</p></div>
+        </div>
+      `;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      inputBox.disabled = false;
+      sendButton.disabled = false;
+      fileUpload.disabled = false;
+      suggestionButtons.forEach(btn => btn.disabled = false);
+      inputBox.focus();
+    }
+
+    document.getElementById("send-button").addEventListener("click", () => sendMessage());
+
+    document.getElementById("message-input").addEventListener("keypress", function (e) {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    document.querySelectorAll(".suggestion-btn").forEach(button => {
+      button.addEventListener("click", () => sendMessage(button.textContent));
+    });
+
+    document.getElementById("file-upload").addEventListener("change", async function () {
+      const file = this.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const chatBox = document.getElementById("chat-box");
+
+      chatBox.innerHTML += `
+        <div class="chat-message user-message">
+          <div class="avatar"><i class="fas fa-user"></i></div>
+          <div class="message-bubble">
+            <p>I've uploaded a file: ${file.name}</p>
           </div>
-          <div class="chat-message bot-message loading" id="loading-indicator">
-            <div class="avatar"><i class="fas fa-robot"></i></div>
-            <div class="message-bubble"><p class="dots">...</p></div>
-          </div>
-        `;
-        chatBox.scrollTop = chatBox.scrollHeight;
-    
-        const res = await fetch("/get_response", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userMessage })
-        });
-    
-        const data = await res.json();
-        const botReply = data.response;
-    
-        // Remove loading
-        const loadingEl = document.getElementById("loading-indicator");
-        if (loadingEl) loadingEl.remove();
-    
-        // Show bot response
+        </div>
+      `;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      const response = await fetch("/upload_file", {
+        method: "POST",
+        body: formData
+      });
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (err) {
+        result = { response: "Oops! Something went wrong processing the response." };
+      }
+
+      if (response.ok) {
         chatBox.innerHTML += `
           <div class="chat-message bot-message">
             <div class="avatar"><i class="fas fa-robot"></i></div>
-            <div class="message-bubble"><p>${botReply}</p></div>
-          </div>
-        `;
-        chatBox.scrollTop = chatBox.scrollHeight;
-    
-        // Re-enable inputs
-        inputBox.disabled = false;
-        sendButton.disabled = false;
-        fileUpload.disabled = false;
-        suggestionButtons.forEach(btn => btn.disabled = false);
-        inputBox.focus();
-      }
-    
-      // Send on button click
-      document.getElementById("send-button").addEventListener("click", () => sendMessage());
-    
-      // Send on Enter
-      document.getElementById("message-input").addEventListener("keypress", function (e) {
-        if (e.key === "Enter") sendMessage();
-      });
-    
-      // Send on suggestion button click
-      document.querySelectorAll(".suggestion-btn").forEach(button => {
-        button.addEventListener("click", () => sendMessage(button.textContent));
-      });
-    
-      // Handle file upload
-      document.getElementById("file-upload").addEventListener("change", async function () {
-        const file = this.files[0];
-        if (!file) return;
-    
-        const formData = new FormData();
-        formData.append("file", file);
-    
-        const chatBox = document.getElementById("chat-box");
-    
-        // Show user upload message
-        chatBox.innerHTML += `
-          <div class="chat-message user-message">
-            <div class="avatar"><i class="fas fa-user"></i></div>
             <div class="message-bubble">
-              <p>I've uploaded a file: ${file.name}</p>
+              <p>${result.response}</p>
+              ${result.preview ? `<p>Here's a preview of your data:</p>${result.preview}` : ""}
             </div>
           </div>
         `;
-        chatBox.scrollTop = chatBox.scrollHeight;
-    
-        const response = await fetch("/upload_file", {
-          method: "POST",
-          body: formData
-        });
-    
-        let result;
-        try {
-          result = await response.json();
-        } catch (err) {
-          result = { response: "Oops! Something went wrong processing the response." };
-        }
-    
-        if (response.ok) {
-          chatBox.innerHTML += `
-            <div class="chat-message bot-message">
-              <div class="avatar"><i class="fas fa-robot"></i></div>
-              <div class="message-bubble">
-                <p>${result.response}</p>
-                ${result.preview ? `<p>Here's a preview of your data:</p>${result.preview}` : ""}
-              </div>
+      } else {
+        chatBox.innerHTML += `
+          <div class="chat-message bot-message">
+            <div class="avatar"><i class="fas fa-robot"></i></div>
+            <div class="message-bubble">
+              <p>${result.response}</p>
             </div>
-          `;
-        } else {
-          chatBox.innerHTML += `
-            <div class="chat-message bot-message">
-              <div class="avatar"><i class="fas fa-robot"></i></div>
-              <div class="message-bubble">
-                <p>${result.response}</p>
-              </div>
-            </div>
-          `;
-        }
-    
-        chatBox.scrollTop = chatBox.scrollHeight;
-        this.value = ""; // Reset file input
-      });
-    </script>
+          </div>
+        `;
+      }
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+      this.value = "";
+    });
+  </script>
 </body>
 </html>
