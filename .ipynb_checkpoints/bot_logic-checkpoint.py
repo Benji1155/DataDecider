@@ -73,7 +73,7 @@ def get_response(intents_list, intents_json):
                 return random.choice(intent['responses'])
     return "I'm not sure how to respond to that. Can you rephrase?"
 
-# Final function
+# Final function that drives the response
 def get_bot_response(user_input):
     print(f"[INFO] User input: {user_input}")
     try:

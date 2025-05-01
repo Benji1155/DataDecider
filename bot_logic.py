@@ -73,7 +73,7 @@ def get_response(intents_list, intents_json):
                 return random.choice(intent['responses'])
     return "I'm not sure how to respond to that. Can you rephrase?"
 
-# Final function
+# Final function that drives the response
 def get_bot_response(user_input):
     print(f"[INFO] User input: {user_input}")
     try:
@@ -81,6 +81,6 @@ def get_bot_response(user_input):
         response = get_response(intents_list, intents)
     except Exception as e:
         print(f"[ERROR] {e}")
-        response = "Oops, something went wrong."
+        response = "Oops, something went wrong. Try again soon!"
 
     return response
