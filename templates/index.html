@@ -1,36 +1,52 @@
+<!-- Chatbot Interface HTML (Flask template) -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chatbot Interface</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
     <div class="chat-container">
-        <div class="chat-box" id="chat-box"></div>
-        <input type="text" id="user-input" placeholder="Type a message..." autofocus>
-        <button onclick="sendMessage()">Send</button>
+        <!-- Chat messages area -->
+        <div class="chat-messages">
+            <!-- Example bot message -->
+            <div class="chat-message bot-message">
+                <img class="avatar" src="{{ url_for('static', filename='bot.png') }}" alt="Bot" />
+                <div class="message-bubble">
+                    <p>Hello! How can I assist you today?</p>
+                </div>
+            </div>
+            <!-- Example user message -->
+            <div class="chat-message user-message">
+                <img class="avatar" src="{{ url_for('static', filename='user.png') }}" alt="User" />
+                <div class="message-bubble">
+                    <p>I have a question about my data.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Suggested response buttons -->
+        <div class="suggestions">
+            <button class="suggestion-btn">Auto-Mode</button>
+            <button class="suggestion-btn">Help Select Statistical Tests</button>
+            <button class="suggestion-btn">Help Select Visualizations</button>
+            <button class="suggestion-btn">I'm Not Sure</button>
+        </div>
+        <!-- Chat input area with file upload and send -->
+        <div class="chat-input">
+            <label for="file-upload" class="file-upload-label">
+                Upload Data
+                <input type="file" id="file-upload" name="file-upload" />
+            </label>
+            <input type="text" id="message-input" placeholder="Type your message..." />
+            <button id="send-button" onclick="sendMessage()">Send</button>
+        </div>
     </div>
-
     <script>
-        async function sendMessage() {
-            const inputBox = document.getElementById("user-input");
-            const message = inputBox.value;
-            inputBox.value = "";
-
-            // Display user message
-            document.getElementById("chat-box").innerHTML += `<div class='user'>You: ${message}</div>`;
-
-            const res = await fetch("/get_response", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({message})
-            });
-
-            const data = await res.json();
-            const botReply = data.response;
-
-            // Display bot response
-            document.getElementById("chat-box").innerHTML += `<div class='bot'>Bot: ${botReply}</div>`;
+        // Existing sendMessage function hook
+        function sendMessage() {
+            // Implementation goes here
         }
     </script>
 </body>
