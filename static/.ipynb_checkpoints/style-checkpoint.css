@@ -1,190 +1,149 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DataDecider Chatbot</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+/* style.css */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f7f9;
+}
 
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f3f4f6;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+.chat-container {
+    max-width: 800px;
+    margin: 40px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
 
-    .sidebar {
-      width: 220px;
-      background: #f4e7ff;
-      padding: 20px 10px;
-      border-top-right-radius: 30px;
-      border-bottom-right-radius: 30px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+/* Chat messages area */
+.chat-messages {
+    padding: 20px;
+    overflow-y: auto;
+    height: 400px;
+}
 
-    .sidebar button {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 10px;
-      border: none;
-      background: white;
-      border-radius: 10px;
-      text-align: center;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
+.chat-message {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
 
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
+.chat-message.user-message {
+    flex-direction: row-reverse;
+}
 
-    .navbar {
-      background: white;
-      padding: 15px 25px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 10px;
+}
 
-    .navbar a, .navbar button {
-      margin-left: 10px;
-      text-decoration: none;
-      color: black;
-      background: none;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
+/* Message bubble */
+.message-bubble {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 12px;
+    position: relative;
+}
 
-    .navbar button.register {
-      background: black;
-      color: white;
-      border-radius: 5px;
-      padding: 5px 10px;
-    }
+.bot-message .message-bubble {
+    background-color: #e0e0e0;
+    color: #000;
+}
 
-    .chat-box {
-      flex: 1;
-      background: #e5e7eb;
-      padding: 30px;
-      overflow-y: auto;
-      border-top-left-radius: 30px;
-    }
+.user-message .message-bubble {
+    background-color: #007BFF;
+    color: #fff;
+}
 
-    .message-box {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
+/* Suggestions row */
+.suggestions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+    border-top: 1px solid #ddd;
+    background-color: #fafafa;
+}
 
-    .suggested-buttons {
-      margin-top: 10px;
-    }
+.suggestion-btn {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.3s;
+}
 
-    .suggested-buttons button {
-      background: black;
-      color: white;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px;
-      margin-right: 8px;
-      margin-top: 6px;
-      font-size: 13px;
-      cursor: pointer;
-    }
+.suggestion-btn:hover {
+    background-color: #555;
+}
 
-    .input-area {
-      display: flex;
-      padding: 15px 20px;
-      background: white;
-      align-items: center;
-      box-shadow: 0 -2px 4px rgba(0,0,0,0.08);
-    }
+/* Chat input area */
+.chat-input {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-top: 1px solid #ddd;
+    background-color: #fff;
+}
 
-    .input-area input[type="file"] {
-      display: none;
-    }
+.file-upload-label {
+    display: inline-block;
+    background-color: #607d8b;
+    color: #fff;
+    padding: 8px 12px;
+    margin-right: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
 
-    .input-area label {
-      margin-right: 12px;
-      cursor: pointer;
-      font-size: 20px;
-    }
+.file-upload-label input[type="file"] {
+    display: none;
+}
 
-    .input-area input[type="text"] {
-      flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
+#message-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    font-size: 14px;
+    outline: none;
+    margin-right: 10px;
+}
 
-    .input-area button.send-btn {
-      padding: 10px 12px;
-      margin-left: 10px;
-      background: black;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <div class="sidebar">
-    <button>Current</button>
-    <button>27/03/25</button>
-    <button>27/03/25</button>
-    <button>14/03/25</button>
-  </div>
+#message-input:focus {
+    border-color: #007BFF;
+}
 
-  <div class="main">
-    <div class="navbar">
-      <div><strong>DataDecider</strong></div>
-      <div>
-        <a href="#">Home</a>
-        <a href="#">Chatbot</a>
-        <a href="#">FAQ/Resources</a>
-        <a href="#">About</a>
-        <button>Sign in</button>
-        <button class="register">Register</button>
-      </div>
-    </div>
+#send-button {
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
 
-    <div class="chat-box">
-      <div class="message-box">
-        <p><strong>Greetings!</strong><br />What would you like help with today?</p>
-        <div class="suggested-buttons">
-          <button>⚙️ Auto-Mode</button>
-          <button>📊 Help Select Statistical Tests</button>
-          <button>📈 Help Select Visualizations</button>
-          <button>😕 I'm Not Sure</button>
-        </div>
-      </div>
-    </div>
+#send-button:hover {
+    background-color: #0069d9;
+}
 
-    <div class="input-area">
-      <label for="upload">📎</label>
-      <input type="file" id="upload" />
-      <input type="text" placeholder="Type your message..." />
-      <button class="send-btn">➤</button>
-    </div>
-  </div>
-</body>
-</html>
+/* Custom scrollbar for chat messages (optional) */
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
