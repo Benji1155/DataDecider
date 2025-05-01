@@ -56,11 +56,11 @@ def predict_class(sentence, model):
 
 # Get response based on intent
 def get_response(intents_list, intents_json):
-    if intents_list:
-        tag = intents_list[0]['intent']
-        for intent in intents_json['intents']:
-            if intent['tag'] == tag:
-                return random.choice(intent['responses'])
+    #if intents_list:
+       # tag = intents_list[0]['intent']
+        #for intent in intents_json['intents']:
+           # if intent['tag'] == tag:
+               # return random.choice(intent['responses'])
     return "I'm not sure how to respond to that. Can you rephrase?"
 
 # Final function to use
