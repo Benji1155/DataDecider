@@ -198,3 +198,19 @@ body {
 .dots::before {
   content: 'Thinking';
 }
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.85rem;
+}
+
+.preview-table th, .preview-table td {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.preview-table th {
+  background-color: #f2f2f2;
+}
