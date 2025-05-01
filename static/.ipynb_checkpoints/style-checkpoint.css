@@ -181,3 +181,20 @@ body {
     background-color: rgba(0, 0, 0, 0.15);
     border-radius: 4px;
 }
+/* Loading dots animation */
+@keyframes blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+.dots::after {
+  content: ' .';
+  animation: blink 1.4s infinite;
+}
+.dots::after {
+  content: ' .';
+}
+.dots::before {
+  content: 'Thinking';
+}
