@@ -65,6 +65,7 @@ def get_response(intents_list, intents_json):
 
 # Final function to use
 def get_bot_response(user_input):
-    intents_list = predict_class(user_input, model)
-    response = get_response(intents_list, intents)
+    #intents_list = predict_class(user_input, model)
+    #response = get_response(intents_list, intents)
+    response = "This is a test message"
     return response
