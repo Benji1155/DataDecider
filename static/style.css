@@ -9,39 +9,65 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f3f4f6;
+      background-color: #ffffff;
       display: flex;
       height: 100vh;
       overflow: hidden;
     }
 
     .sidebar {
-      width: 220px;
-      background: #f4e7ff;
-      padding: 20px 10px;
-      border-top-right-radius: 30px;
-      border-bottom-right-radius: 30px;
+      width: 260px;
+      background: #f7f7f8;
+      padding: 20px 0;
+      border-right: 1px solid #e5e5e6;
       display: flex;
       flex-direction: column;
-      align-items: center;
+    }
+
+    .sidebar-header {
+      padding: 0 16px 16px;
+      border-bottom: 1px solid #e5e5e6;
+      margin-bottom: 16px;
     }
 
     .sidebar button {
       display: block;
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 10px;
+      width: calc(100% - 16px);
+      padding: 10px 12px;
+      margin: 4px 8px;
       border: none;
-      background: white;
-      border-radius: 10px;
-      text-align: center;
-      font-weight: bold;
+      background: transparent;
+      border-radius: 6px;
+      text-align: left;
+      font-size: 14px;
       cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      color: #565867;
+      transition: all 0.2s;
+    }
+
+    .sidebar button:hover {
+      background: #e5e5e6;
+    }
+
+    .sidebar button.active {
+      background: #e8ebfa;
+      color: #3a3b3d;
+      font-weight: 500;
+    }
+
+    .new-chat-btn {
+      margin: 8px;
+      padding: 10px 12px;
+      border: 1px solid #e5e5e6;
+      border-radius: 6px;
+      background: white !important;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .main {
@@ -52,68 +78,110 @@
 
     .navbar {
       background: white;
-      padding: 15px 25px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-bottom: 1px solid #e5e5e6;
     }
 
     .navbar a, .navbar button {
-      margin-left: 10px;
+      margin-left: 12px;
       text-decoration: none;
-      color: black;
+      color: #3a3b3d;
       background: none;
       border: none;
-      font-weight: bold;
+      font-size: 14px;
       cursor: pointer;
     }
 
     .navbar button.register {
-      background: black;
+      background: #3a3b3d;
       color: white;
-      border-radius: 5px;
-      padding: 5px 10px;
+      border-radius: 4px;
+      padding: 6px 12px;
+    }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      height: calc(100vh - 120px);
     }
 
     .chat-box {
       flex: 1;
-      background: #e5e7eb;
-      padding: 30px;
+      padding: 24px 0;
       overflow-y: auto;
-      border-top-left-radius: 30px;
     }
 
     .message-box {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 16px 0;
+    }
+
+    .message-box.bot {
+      background: #f7f7f8;
+      border-top: 1px solid #e5e5e6;
+      border-bottom: 1px solid #e5e5e6;
+    }
+
+    .message-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 16px;
     }
 
     .suggested-buttons {
-      margin-top: 10px;
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .suggested-buttons-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 16px;
     }
 
     .suggested-buttons button {
-      background: black;
-      color: white;
+      background: #ececf1;
+      color: #3a3b3d;
       padding: 8px 12px;
       border: none;
-      border-radius: 6px;
-      margin-right: 8px;
-      margin-top: 6px;
+      border-radius: 4px;
       font-size: 13px;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .suggested-buttons button:hover {
+      background: #e0e0e0;
+    }
+
+    .input-area-container {
+      padding: 16px;
+      background: white;
+      border-top: 1px solid #e5e5e6;
     }
 
     .input-area {
+      max-width: 800px;
+      margin: 0 auto;
       display: flex;
-      padding: 15px 20px;
-      background: white;
+      padding: 8px 12px;
+      background: #f7f7f8;
       align-items: center;
-      box-shadow: 0 -2px 4px rgba(0,0,0,0.08);
+      border-radius: 6px;
+      border: 1px solid #e5e5e6;
+    }
+
+    .input-area:focus-within {
+      border-color: #8d8dff;
+      box-shadow: 0 0 0 2px #e8ebfa;
     }
 
     .input-area input[type="file"] {
@@ -123,32 +191,58 @@
     .input-area label {
       margin-right: 12px;
       cursor: pointer;
-      font-size: 20px;
+      color: #565867;
     }
 
     .input-area input[type="text"] {
       flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      padding: 8px 0;
+      border: none;
+      background: transparent;
       font-size: 14px;
+      outline: none;
     }
 
     .input-area button.send-btn {
-      padding: 10px 12px;
-      margin-left: 10px;
-      background: black;
-      color: white;
+      padding: 6px;
+      margin-left: 8px;
+      background: transparent;
+      color: #565867;
       border: none;
-      border-radius: 50%;
-      font-size: 16px;
       cursor: pointer;
+    }
+
+    .input-area button.send-btn:hover {
+      color: #3a3b3d;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
     }
   </style>
 </head>
 <body>
   <div class="sidebar">
-    <button>Current</button>
+    <div class="sidebar-header">
+      <button class="new-chat-btn">
+        <span>+</span> New chat
+      </button>
+    </div>
+    <button class="active">Current</button>
     <button>27/03/25</button>
     <button>27/03/25</button>
     <button>14/03/25</button>
@@ -167,23 +261,32 @@
       </div>
     </div>
 
-    <div class="chat-box">
-      <div class="message-box">
-        <p><strong>Greetings!</strong><br />What would you like help with today?</p>
-        <div class="suggested-buttons">
-          <button>⚙️ Auto-Mode</button>
-          <button>📊 Help Select Statistical Tests</button>
-          <button>📈 Help Select Visualizations</button>
-          <button>😕 I'm Not Sure</button>
+    <div class="chat-container">
+      <div class="chat-box">
+        <div class="message-box bot">
+          <div class="message-content">
+            <p>Greetings! What would you like help with today?</p>
+          </div>
+        </div>
+        
+        <div class="suggested-buttons-container">
+          <div class="suggested-buttons">
+            <button>⚙️ Auto-Mode</button>
+            <button>📊 Help Select Statistical Tests</button>
+            <button>📈 Help Select Visualizations</button>
+            <button>😕 I'm Not Sure</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="input-area">
-      <label for="upload">📎</label>
-      <input type="file" id="upload" />
-      <input type="text" placeholder="Type your message..." />
-      <button class="send-btn">➤</button>
+      <div class="input-area-container">
+        <div class="input-area">
+          <label for="upload">📎</label>
+          <input type="file" id="upload" />
+          <input type="text" placeholder="Type a message..." />
+          <button class="send-btn">➤</button>
+        </div>
+      </div>
     </div>
   </div>
 </body>
