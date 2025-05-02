@@ -81,6 +81,6 @@ def get_bot_response(user_input):
         response = get_response(intents_list, intents)
     except Exception as e:
         print(f"[ERROR] {e}")
-        response = "Oops, something went wrong."
+        response = "Oops, something went wrong. Try again soon!"
 
     return response

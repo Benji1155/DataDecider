@@ -45,13 +45,39 @@ def upload_file():
             else:
                 df = pd.read_excel(filepath)
 
+            # Generate HTML preview
             preview_html = df.head(5).to_html(classes="preview-table", index=False, border=0)
+
+            # Cleanliness analysis
+            total_rows = len(df)
+            total_columns = len(df.columns)
+            missing_values = df.isnull().sum().sum()
+            duplicate_rows = df.duplicated().sum()
+            total_cells = total_rows * total_columns
+            missing_percent = (missing_values / total_cells) * 100 if total_cells else 0
+
+            cleanliness_summary = (
+                f"✅ <strong>{filename}</strong> has been uploaded and previewed.<br><br>"
+                f"🔍 Here's a quick data quality check:<br>"
+                f"- Rows: <strong>{total_rows}</strong><br>"
+                f"- Columns: <strong>{total_columns}</strong><br>"
+                f"- Missing values: <strong>{missing_values}</strong> ({missing_percent:.2f}%)<br>"
+                f"- Duplicate rows: <strong>{duplicate_rows}</strong><br><br>"
+                f"Is the data you provided clean?"
+            )
+
             return jsonify({
-                "response": f"Thanks! Your dataset <strong>{filename}</strong> has been received and is ready for analysis.",
-                "preview": preview_html
+                "response": cleanliness_summary,
+                "preview": preview_html,
+                "suggestions": [
+                    "Yes, it is clean",
+                    "No, I need help cleaning it",
+                    "I'm not sure"
+                ]
             })
+
         except Exception as e:
-            return jsonify({"response": f"File saved, but failed to preview the data: {str(e)}"}), 500
+            return jsonify({"response": f"File saved, but failed to preview or analyze the data: {str(e)}"}), 500
 
     return jsonify({"response": "Please upload a CSV or Excel file (.csv, .xls, .xlsx)."}), 400
 
