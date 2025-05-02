@@ -18,38 +18,11 @@ def allowed_file(filename):
 def home():
     return render_template("index.html")
 
-# Define a global variable to track cleaning confirmation state
-cleaning_confirmation_pending = False
-uploaded_df = None  # Store the uploaded dataframe globally (or use session)
-
-def get_response(intents_list, intents_json, user_message=None):
-    global cleaning_confirmation_pending, uploaded_df
-
-    if cleaning_confirmation_pending and uploaded_df is not None:
-        message = (user_message or "").strip().lower()
-        if "yes" in message:
-            cleaning_confirmation_pending = False
-            return "Awesome! Let's move on to the next step."
-        elif "no" in message:
-            cleaned_df, explanation = clean_data(uploaded_df)
-            uploaded_df = cleaned_df
-            cleaning_confirmation_pending = False
-            return f"I’ve cleaned your data. {explanation} Let’s proceed."
-        elif "not sure" in message or "unsure" in message:
-            explanation = explain_data_cleanliness(uploaded_df)
-            cleaned_df, cleaning_notes = clean_data(uploaded_df)
-            uploaded_df = cleaned_df
-            cleaning_confirmation_pending = False
-            return f"No worries! {explanation} I’ve also cleaned the data for you. {cleaning_notes} Let’s continue."
-
-    if intents_list:
-        tag = intents_list[0]['intent']
-        for intent in intents_json['intents']:
-            if intent['tag'] == tag:
-                return random.choice(intent['responses'])
-
-    return "I'm not sure how to respond to that. Can you rephrase?"
-
+@app.route("/get_response", methods=["POST"])
+def get_response():
+    user_input = request.json.get("message")
+    response = get_bot_response(user_input)
+    return jsonify({"response": response})
 
 @app.route("/upload_file", methods=["POST"])
 def upload_file():
