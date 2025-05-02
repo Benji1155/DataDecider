@@ -214,3 +214,15 @@ body {
 .preview-table th {
   background-color: #f4f4f4;
 }
+.message-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.message-author {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #888;
+  margin-bottom: 2px;
+  margin-left: 5px;
+}

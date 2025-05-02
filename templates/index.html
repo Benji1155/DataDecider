@@ -60,11 +60,17 @@
         chatBox.innerHTML += `
           <div class="chat-message user-message">
             <div class="avatar"><i class="fas fa-user"></i></div>
-            <div class="message-bubble"><p>${userMessage}</p></div>
+            <div class="message-content">
+              <div class="message-author">You</div>
+              <div class="message-bubble"><p>${userMessage}</p></div>
+            </div>
           </div>
           <div class="chat-message bot-message loading" id="loading-indicator">
             <div class="avatar"><i class="fas fa-robot"></i></div>
-            <div class="message-bubble"><p class="dots">...</p></div>
+            <div class="message-content">
+              <div class="message-author">DataDecider</div>
+              <div class="message-bubble"><p class="dots">...</p></div>
+            </div>
           </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -83,7 +89,10 @@
         chatBox.innerHTML += `
           <div class="chat-message bot-message">
             <div class="avatar"><i class="fas fa-robot"></i></div>
-            <div class="message-bubble"><p>${botReply}</p></div>
+            <div class="message-content">
+              <div class="message-author">DataDecider</div>
+              <div class="message-bubble"><p>${botReply}</p></div>
+            </div>
           </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -117,8 +126,11 @@
         chatBox.innerHTML += `
           <div class="chat-message user-message">
             <div class="avatar"><i class="fas fa-user"></i></div>
-            <div class="message-bubble">
-              <p>I've uploaded a file: ${file.name}</p>
+            <div class="message-content">
+              <div class="message-author">You</div>
+              <div class="message-bubble">
+                <p>I've uploaded a file: ${file.name}</p>
+              </div>
             </div>
           </div>
         `;
@@ -140,16 +152,18 @@
           chatBox.innerHTML += `
             <div class="chat-message bot-message">
               <div class="avatar"><i class="fas fa-robot"></i></div>
-              <div class="message-bubble">
-                <p>${result.response}</p>
-                ${result.preview ? `<p>Here's a preview of your data:</p>${result.preview}` : ""}
+              <div class="message-content">
+                <div class="message-author">DataDecider</div>
+                <div class="message-bubble">
+                  <p>${result.response}</p>
+                  ${result.preview ? `<p>Here's a preview of your data:</p>${result.preview}` : ""}
+                </div>
               </div>
             </div>
           `;
     
-          // Replace suggestion buttons if provided
           if (result.suggestions && Array.isArray(result.suggestions)) {
-            suggestionContainer.innerHTML = ""; // Clear old buttons
+            suggestionContainer.innerHTML = "";
             result.suggestions.forEach(text => {
               const btn = document.createElement("button");
               btn.className = "suggestion-btn";
@@ -162,15 +176,18 @@
           chatBox.innerHTML += `
             <div class="chat-message bot-message">
               <div class="avatar"><i class="fas fa-robot"></i></div>
-              <div class="message-bubble">
-                <p>${result.response}</p>
+              <div class="message-content">
+                <div class="message-author">DataDecider</div>
+                <div class="message-bubble">
+                  <p>${result.response}</p>
+                </div>
               </div>
             </div>
           `;
         }
     
         chatBox.scrollTop = chatBox.scrollHeight;
-        this.value = ""; // Reset file input
+        this.value = "";
       });
     </script>
 </body>
