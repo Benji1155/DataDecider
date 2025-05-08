@@ -55,11 +55,36 @@ def suggest_charts_based_on_answers(user_answers, df_sample):
     col_types = get_simplified_column_types(df_sample)
     numerical_cols = [c for c,t in col_types.items() if t=='numerical']; categorical_cols = [c for c,t in col_types.items() if t in ['categorical', 'categorical_numeric']]; distributable_numeric_cols = [c for c,t in col_types.items() if t in ['numerical', 'categorical_numeric']]; datetime_cols = [c for c,t in col_types.items() if t=='datetime']
     ua_count, ua_types, ua_msg = user_answers.get('variable_count','').lower(), user_answers.get('variable_types','').lower(), user_answers.get('message_insight','').lower()
+
     # --- Suggestion Rules ---
-    if ("one" in ua_count or "1" in ua_count) and ("dist" in ua_msg or "spread" in ua_msg or "summ" in ua_msg) and ("num" in ua_types or "cat" in ua_types or "any" in ua_types or not ua_types) and distributable_numeric_cols: suggestions.extend([{"name": "Histogram", "for_col": col, "reason": f"Distribution of '{col}'.", "required_cols_specific": [col]}, {"name": "Box Plot", "for_col": col, "reason": f"Summary of '{col}'.", "required_cols_specific": [col]}, {"name": "Density Plot", "for_col": col, "reason": f"Smooth distribution of '{col}'.", "required_cols_specific": [col]}] for col in distributable_numeric_cols)
+    # Rule: Distribution of ONE NUMERICAL/RATING variable
+    if ("one" in ua_count or "1" in ua_count) and ("dist" in ua_msg or "spread" in ua_msg or "summ" in ua_msg) and ("num" in ua_types or "cat" in ua_types or "any" in ua_types or not ua_types) and distributable_numeric_cols:
+        for col in distributable_numeric_cols:
+             suggestions.extend([{"name": "Histogram", "for_col": col, "type": "Univariate Numerical", "reason": f"Distribution of '{col}'.", "required_cols_specific": [col]},
+                                 {"name": "Box Plot", "for_col": col, "type": "Univariate Numerical", "reason": f"Summary of '{col}'.", "required_cols_specific": [col]},
+                                 {"name": "Density Plot", "for_col": col, "type": "Univariate Numerical", "reason": f"Smooth distribution of '{col}'.", "required_cols_specific": [col]}])
+
+    # Rule: Frequency/Proportion of ONE CATEGORICAL variable
     if ("one" in ua_count or "1" in ua_count) and ("prop" in ua_msg or "share" in ua_msg or "freq" in ua_msg or "count" in ua_msg or "val" in ua_msg) and ("cat" in ua_types or "any" in ua_types or not ua_types) and categorical_cols:
-        for col in categorical_cols: suggestions.append({"name": "Bar Chart (Counts)", "for_col": col, "type": "Univariate Categorical", "reason": f"Counts for categories in '{col}'.", "required_cols_specific": [col]}); try: nunique=df_sample[col].nunique(); if 1<nunique<8: suggestions.append({"name": "Pie Chart", "for_col": col, "type": "Univariate Categorical", "reason": f"Proportions for '{col}'.", "required_cols_specific": [col]}) except Exception as e: print(f"Warn: Pie sugg failed for {col}: {e}")
-    if ("two" in ua_count or "2" in ua_count) and ("relat" in ua_msg or "corr" in ua_msg or "scat" in ua_msg) and ("num" in ua_types or "any" in ua_types or not ua_types) and len(numerical_cols)>=2: suggestions.extend({"name": "Scatter Plot", "for_cols": f"{c1} & {c2}", "reason": f"Relationship: '{c1}' vs '{c2}'.", "required_cols_specific": [c1, c2]} for i,c1 in enumerate(numerical_cols) for j,c2 in enumerate(numerical_cols) if j>i)
+        # --- CORRECTED LOOP STRUCTURE ---
+        for col in categorical_cols:
+            # Always suggest Bar Chart (Counts)
+            suggestions.append({"name": "Bar Chart (Counts)", "for_col": col, "type": "Univariate Categorical", "reason": f"Shows counts for categories in '{col}'.", "required_cols_specific": [col]})
+            # Suggest Pie Chart only if few unique values exist in the sample
+            try:
+                # Check uniqueness again just in case df_sample was small or had NaNs
+                if col in df_sample.columns:
+                     nunique = df_sample[col].nunique(dropna=True) # Use dropna=True
+                     if 1 < nunique < 8: # Check condition
+                         suggestions.append({"name": "Pie Chart", "for_col": col, "type": "Univariate Categorical", "reason": f"Shows proportions for '{col}'.", "required_cols_specific": [col]})
+            except KeyError: # Handle case where column might be missing if df_sample read failed partially
+                print(f"Warning: Column '{col}' not found in sample for Pie Chart suggestion.")
+            except Exception as e: # Catch other potential errors during nunique()
+                print(f"Warning during pie chart suggestion for {col}: {e}")
+        # --- END CORRECTION ---
+
+    # --- (Keep other suggestion rules as they were) ---
+    if ("two" in ua_count or "2" in ua_count) and ("relat" in ua_msg or "corr" in ua_msg or "scat" in ua_msg) and ("num" in ua_types or "any" in ua_types or not ua_types) and len(numerical_cols)>=2: suggestions.extend([{"name": "Scatter Plot", "for_cols": f"{c1} & {c2}", "reason": f"Relationship: '{c1}' vs '{c2}'.", "required_cols_specific": [c1, c2]} for i,c1 in enumerate(numerical_cols) for j,c2 in enumerate(numerical_cols) if j>i])
     if ("two" in ua_count or "2" in ua_count) and ("comp" in ua_msg or "across" in ua_msg or "group" in ua_msg or "dist" in ua_msg) and ("mix" in ua_types or "cat" in ua_types or "num" in ua_types or "any" in ua_types or not ua_types) and distributable_numeric_cols and categorical_cols:
         suggestions.extend([{"name": "Box Plots (by Category)", "for_cols": f"{num_col} by {cat_col}", "reason": f"Distribution of '{num_col}' across '{cat_col}'.", "required_cols_specific": [cat_col, num_col]}, {"name": "Violin Plots (by Category)", "for_cols": f"{num_col} by {cat_col}", "reason": f"Density/distribution of '{num_col}' across '{cat_col}'.", "required_cols_specific": [cat_col, num_col]}] for num_col in distributable_numeric_cols for cat_col in categorical_cols if num_col != cat_col)
         if numerical_cols and categorical_cols: suggestions.extend([{"name": "Bar Chart (Aggregated)", "for_cols": f"Avg of {num_col} by {cat_col}", "reason": f"Average '{num_col}' for each category in '{cat_col}'.", "required_cols_specific": [cat_col, num_col]} for num_col in numerical_cols for cat_col in categorical_cols if num_col != cat_col])
@@ -67,8 +92,10 @@ def suggest_charts_based_on_answers(user_answers, df_sample):
     if (("two" in ua_count or "2" in ua_count) or "time" in ua_types or "trend" in ua_msg) and datetime_cols and numerical_cols: suggestions.extend([{"name": "Line Chart", "for_cols": f"{num} over {dt}", "reason": f"Trend of '{num}' over '{dt}'.", "required_cols_specific": [dt, num]}, {"name": "Area Chart", "for_cols": f"{num} over {dt}", "reason": f"Cumulative trend of '{num}' over '{dt}'.", "required_cols_specific": [dt, num]}] for dt in datetime_cols for num in numerical_cols)
     if ("more" in ua_count or "mult" in ua_count or "pair" in ua_msg or "heat" in ua_msg or "para" in ua_msg) or ((ua_count not in ["one","1","two","2"]) and (len(numerical_cols)>2 or len(categorical_cols)>2)):
         if len(numerical_cols)>=3: suggestions.extend([{"name": "Pair Plot", "reason": "Pairwise relationships (numerical).", "required_cols_specific": numerical_cols[:min(4,len(numerical_cols))]}, {"name": "Correlation Heatmap", "reason": "Correlation matrix (numerical).", "required_cols_specific": numerical_cols}, {"name": "Parallel Coordinates Plot", "reason": "Compare multiple numerical variables.", "required_cols_specific": numerical_cols[:min(6,len(numerical_cols))]}])
+
+    # --- Deduplication Logic (Multi-line structure) ---
     final_suggestions_dict = {}; suggestions_order = []
-    for s in suggestions: # CORRECTED DEDUPLICATION LOOP
+    for s in suggestions:
         req_cols = s.get("required_cols_specific", [])
         s_key_cols = "_".join(sorted(req_cols)) if req_cols else ""
         s_key = f"{s['name']}_{s_key_cols}"
@@ -76,13 +103,17 @@ def suggest_charts_based_on_answers(user_answers, df_sample):
             final_suggestions_dict[s_key] = s
             suggestions_order.append(s_key)
     final_suggestions = [final_suggestions_dict[key] for key in suggestions_order]
+    # --- End Deduplication ---
+
     if not final_suggestions: final_suggestions.append({"name": "No specific chart matched well", "type": "Info", "reason": "Criteria didn't match. Pick columns manually?", "required_cols_specific": []})
     if not any(s['name']=="Pick columns manually" for s in final_suggestions): final_suggestions.append({"name": "Pick columns manually", "type": "Action", "reason": "Choose columns yourself.", "required_cols_specific": []})
     return final_suggestions
 
+
 # --- Validation Function ---
 def validate_columns_for_chart(chart_type: str, columns: List[str], df: pd.DataFrame) -> Optional[str]:
     """Validates if columns are suitable for chart type. Returns error message or None."""
+    # ... (Keep the corrected version from the previous response) ...
     if not columns: return "No columns selected."
     if not all(col in df.columns for col in columns): missing = [col for col in columns if col not in df.columns]; return f"Column(s) not found: {', '.join(missing)}"
     col_types = get_simplified_column_types(df[columns]); num_numerical = sum(1 for t in col_types.values() if t == 'numerical'); num_categorical = sum(1 for t in col_types.values() if t in ['categorical', 'categorical_numeric']); num_distributable_numeric = sum(1 for t in col_types.values() if t in ['numerical', 'categorical_numeric']); num_datetime = sum(1 for t in col_types.values() if t == 'datetime'); num_selected = len(columns)
@@ -110,13 +141,15 @@ def validate_columns_for_chart(chart_type: str, columns: List[str], df: pd.DataF
 # --- Plotting Function ---
 def generate_plot_and_get_uri(filepath, chart_type, columns):
     """Generates plot and returns base64 URI or (None, error_msg)."""
+    # ... (Keep the implementation including the call to validate_columns_for_chart and the Pie chart fix) ...
     if not filepath: return None, "File path missing."
     try:
         df_full = pd.read_csv(filepath) if filepath.endswith(".csv") else pd.read_excel(filepath)
         if not all(col in df_full.columns for col in columns): missing_cols = [c for c in columns if c not in df_full.columns]; return None, f"Column(s) not found: {', '.join(missing_cols)}."
+        # Run validation using a copy of the relevant columns from the full dataframe
         validation_error = validate_columns_for_chart(chart_type, columns, df_full[columns].copy())
         if validation_error: return None, f"Invalid columns for {chart_type}: {validation_error}"
-        df_plot = df_full[columns].copy()
+        df_plot = df_full[columns].copy() # Now subset for plotting
     except Exception as e: print(f"Error reading/validating dataframe ('{filepath}'): {e}"); return None, f"Error reading/validating data: {str(e)[:100]}"
     img = io.BytesIO(); plt.figure(figsize=(7.5, 5)); plt.style.use('seaborn-v0_8-whitegrid'); original_chart_type = chart_type; plot_title_detail = ""
     try:
@@ -135,11 +168,11 @@ def generate_plot_and_get_uri(filepath, chart_type, columns):
         elif mapped_chart_type=="Box Plot": sns.boxplot(data=df_plot, y=plot_columns[0]); plot_title=f"Box Plot of {plot_columns[0]}"
         elif mapped_chart_type=="Density Plot": sns.kdeplot(data=df_plot, x=plot_columns[0], fill=True); plot_title=f"Density Plot of {plot_columns[0]}"
         elif mapped_chart_type=="Bar Chart (Counts)": counts=df_plot[plot_columns[0]].value_counts().nlargest(20); sns.barplot(x=counts.index, y=counts.values); plot_title=f"Top Counts for {plot_columns[0]}"; plt.ylabel("Count"); plt.xlabel(plot_columns[0]); plt.xticks(rotation=65, ha='right', fontsize=9)
-        elif mapped_chart_type == "Pie Chart": # CORRECTED LOGIC STRUCTURE
+        elif mapped_chart_type == "Pie Chart": # CORRECTED PIE STRUCTURE
             counts = df_plot[plot_columns[0]].value_counts()
             effective_counts = counts.nlargest(7)
             if len(counts) > 7:
-                effective_counts.loc['Other'] = counts.iloc[7:].sum()
+                 effective_counts.loc['Other'] = counts.iloc[7:].sum()
             plt.pie(effective_counts, labels=effective_counts.index, autopct='%1.1f%%', startangle=90, pctdistance=0.85)
             plot_title = f"Pie Chart of {plot_columns[0]}"
             plt.axis('equal')
@@ -156,11 +189,9 @@ def generate_plot_and_get_uri(filepath, chart_type, columns):
         elif mapped_chart_type=="Violin Plots (by Category)": sns.violinplot(data=df_plot, x=plot_columns[0], y=plot_columns[1]); plot_title=f"Violin Plots: {plot_columns[1]} by {plot_columns[0]}"; plt.xlabel(plot_columns[0]); plt.ylabel(plot_columns[1]); plt.xticks(rotation=65, ha='right', fontsize=9)
         elif mapped_chart_type=="Bar Chart (Aggregated)": cat_col,num_col=plot_columns[0],plot_columns[1]; agg_data=df_plot.groupby(cat_col)[num_col].mean().nlargest(20); sns.barplot(x=agg_data.index, y=agg_data.values); plot_title=f"Mean of {num_col} by {cat_col}"; plt.xlabel(cat_col); plt.ylabel(f"Mean of {num_col}"); plt.xticks(rotation=65, ha='right', fontsize=9)
         elif mapped_chart_type=="Grouped Bar Chart": col1_tc=df_plot[plot_columns[0]].value_counts().nlargest(10).index; col2_tc=df_plot[plot_columns[1]].value_counts().nlargest(5).index; df_f=df_plot[df_plot[plot_columns[0]].isin(col1_tc) & df_plot[plot_columns[1]].isin(col2_tc)]; sns.countplot(data=df_f, x=plot_columns[0], hue=plot_columns[1]); plot_title=f"Counts: {plot_columns[0]} by {plot_columns[1]}"; plt.xlabel(plot_columns[0]); plt.ylabel("Count"); plt.xticks(rotation=65, ha='right', fontsize=9); plt.legend(title=plot_columns[1], fontsize='x-small', title_fontsize='small', bbox_to_anchor=(1.02,1), loc='upper left')
-        # --- ADD OTHER PLOT TYPES HERE ---
         else: raise NotImplementedError(f"Plot type '{mapped_chart_type}' is not explicitly implemented.")
         plt.title(plot_title, fontsize=12); plt.tight_layout(pad=1.0); plt.savefig(img, format='png', bbox_inches='tight'); plt.close(); img.seek(0)
         plot_url = base64.b64encode(img.getvalue()).decode('utf8'); print(f"Success: {original_chart_type} (as {mapped_chart_type})"); return f"data:image/png;base64,{plot_url}", None
-
     except Exception as e:
         # --- CORRECTED EXCEPTION BLOCK STRUCTURE ---
         error_info = f"{type(e).__name__}: {str(e)}"
@@ -186,7 +217,6 @@ def get_response():
     """Handles user messages, state transitions, suggestions, and plotting calls."""
     user_input = request.json.get("message")
     response_data = {}; bot_reply = ""
-
     user_input_lower = user_input.lower() if user_input else ""
 
     # --- Explicit command checks BEFORE state machine ---
@@ -200,7 +230,7 @@ def get_response():
             response_data = {"suggestions": ["Suggest chart types for me", "Let me choose columns", "Restart questions"]}
             response_data["response"] = bot_reply; session['last_suggestions'] = response_data.get("suggestions", []); return jsonify(response_data)
         else: bot_reply = "Let's start over. Please upload data."; home(); response_data = {"suggestions": ["Upload Data", "Help"]}
-        # Fall through to normal packaging if context lost
+        # Fall through
 
     # --- State Machine Logic ---
     current_viz_state = session.get('visualization_questions_state')
@@ -208,6 +238,15 @@ def get_response():
     uploaded_filepath = session.get('uploaded_filepath')
     user_answers = {'variable_types': session.get('user_answer_variable_types', ''), 'message_insight': session.get('user_answer_visualization_message', ''), 'variable_count': session.get('user_answer_variable_count', '')}
 
+    # --- (Keep all the state handling logic from the previous version here) ---
+    # This includes: asking_variable_types, asking_visualization_message, asking_variable_count,
+    # visualization_info_gathered, awaiting_chart_type_selection, confirm_plot_details,
+    # awaiting_columns_for_selected_chart, awaiting_column_selection_general,
+    # awaiting_chart_type_for_manual_cols, and the final NLU else block.
+    # Ensure this entire section is correctly placed from the previous code block.
+    # ... (Insert the long if/elif/else block for states here) ...
+
+    # --- START OF STATE MACHINE LOGIC (Copy from previous correct version) ---
     if current_viz_state == 'asking_variable_types':
         session['user_answer_variable_types'] = user_input
         bot_reply = (f"Understood ({user_input}).<br><br>"
@@ -237,17 +276,18 @@ def get_response():
         response_data = {"suggestions": ["Suggest charts for me", "Let me choose columns", "Restart questions"]}
 
     elif current_viz_state == 'visualization_info_gathered':
+        # Restart check handled globally
         if "suggest chart" in user_input_lower:
             df_sample = None; bot_reply = ""; response_data_suggestions = []
             if uploaded_filepath:
                 try: df_sample = pd.read_csv(uploaded_filepath, nrows=100) if uploaded_filepath.endswith(".csv") else pd.read_excel(uploaded_filepath, nrows=100)
                 except Exception as e: print(f"Error reading df_sample: {e}")
-            print(f"\n--- DEBUG Suggester ---"); print(f"User Answers: {user_answers}") # DEBUG
+            print(f"\n--- DEBUG Suggester ---"); print(f"User Answers: {user_answers}")
             col_types_sample = {};
-            if df_sample is not None and not df_sample.empty: col_types_sample = get_simplified_column_types(df_sample); print(f"Sample Col Types: {col_types_sample}") # DEBUG
-            else: print("Sample Col Types: (Could not read or empty sample)") # DEBUG
+            if df_sample is not None and not df_sample.empty: col_types_sample = get_simplified_column_types(df_sample); print(f"Sample Col Types: {col_types_sample}")
+            else: print("Sample Col Types: (Could not read or empty sample)")
             chart_suggestions = suggest_charts_based_on_answers(user_answers, df_sample); session['chart_suggestions_list'] = chart_suggestions
-            print(f"Chart Suggestions Returned: {[s.get('name') for s in chart_suggestions]}") # DEBUG
+            print(f"Chart Suggestions Returned: {[s.get('name') for s in chart_suggestions]}")
             if chart_suggestions and chart_suggestions[0].get("type") not in ["Info", None]:
                  bot_reply = "Based on your info, consider:<br>"; suggestions_for_user_options = []
                  count = 0
@@ -268,10 +308,10 @@ def get_response():
         elif "choose columns" in user_input_lower or "pick columns" in user_input_lower:
              if not df_columns: bot_reply = "Need columns list. Upload data."; response_data = {"suggestions": ["Upload Data"]}; session['visualization_questions_state'] = None
              else: bot_reply = f"Sure! Which columns? (Available: {', '.join(df_columns)})"; session['visualization_questions_state'] = 'awaiting_column_selection_general'; session['manual_columns_selected'] = []; response_data = {"suggestions": [f"Use: {col}" for col in df_columns[:2]] + ["Finished selecting", "Cancel selection"]}
-        # Restart handled globally
         else: bot_reply = "What next?"; response_data = {"suggestions": session.get('last_suggestions', ["Suggest charts", "Pick columns", "Restart"])}
 
     elif current_viz_state == 'awaiting_chart_type_selection':
+        # Restart handled globally
         user_choice_str = user_input.replace("Select: ", "").strip(); chart_suggestions_list = session.get('chart_suggestions_list', []); selected_chart_info = next((sugg for sugg in chart_suggestions_list if sugg['name'] == user_choice_str), None)
         if user_choice_str == "Pick columns manually":
              if not df_columns: bot_reply = "Need columns list. Upload data."; response_data = {"suggestions": ["Upload Data"]}; session['visualization_questions_state'] = None
@@ -282,9 +322,13 @@ def get_response():
             if required_cols_specific:
                 cols_to_use_str = ", ".join(required_cols_specific); validation_msg = None
                 if uploaded_filepath:
-                    try: df_val = pd.read_csv(uploaded_filepath, usecols=required_cols_specific, nrows=5) if uploaded_filepath.endswith(".csv") else pd.read_excel(uploaded_filepath, usecols=required_cols_specific, nrows=5); validation_msg = validate_columns_for_chart(chart_name, required_cols_specific, df_val)
+                    try:
+                        # Read sample for validation
+                        df_val = pd.read_csv(uploaded_filepath, usecols=required_cols_specific, nrows=5) if uploaded_filepath.endswith(".csv") else pd.read_excel(uploaded_filepath, usecols=required_cols_specific, nrows=5)
+                        print(f"DEBUG Pre-validation: Checking {chart_name} for {required_cols_specific}") # DEBUG
+                        validation_msg = validate_columns_for_chart(chart_name, required_cols_specific, df_val)
+                        print(f"DEBUG Pre-validation Result: {validation_msg or 'Passed'}") # DEBUG
                     except Exception as e: validation_msg = f"Couldn't validate ({str(e)[:50]}...)."; print(f"DEBUG Validation Read Error: {e}")
-                    print(f"DEBUG Pre-validation for {chart_name}, cols {required_cols_specific}: {validation_msg or 'Passed'}")
                 if validation_msg is None: bot_reply += f"Suggest using: <strong>{cols_to_use_str}</strong>. Plot?"; session['plotting_columns'] = required_cols_specific; response_data = {"suggestions": [f"Yes, plot {chart_name}", "Choose other columns", "Back to chart list"]}; session['visualization_questions_state'] = 'confirm_plot_details'
                 else: bot_reply += f"Suggested cols '{cols_to_use_str}' may not work ({validation_msg}).<br>Select columns for {chart_name}. Available: {', '.join(df_columns)}"; session['visualization_questions_state'] = 'awaiting_columns_for_selected_chart'; response_data = {"suggestions": [f"Use: {col}" for col in df_columns[:2]] + ["Back to chart list"]}
             else: bot_reply += f"Which columns for {chart_name}? Available: {', '.join(df_columns)}"; session['visualization_questions_state'] = 'awaiting_columns_for_selected_chart'; response_data = {"suggestions": [f"Use: {col}" for col in df_columns[:2]] + ["Back to chart list"]}
@@ -356,9 +400,9 @@ def get_response():
             else: bot_reply = nlu_output; temp_suggestions = []
             if not temp_suggestions: temp_suggestions = ["Help", "Upload Data", "What can you do?"]
             response_data = {"suggestions": temp_suggestions}
-        elif not response_data: # Ensure response_data is initialized if only bot_reply was set by global command
+        # If bot_reply was set by a global command handler (like lost context for 'suggest another'), package it now
+        elif 'suggestions' not in response_data: # Ensure response_data has suggestions if only bot_reply was set
              response_data = {"suggestions": ["Help", "Upload Data"]}
-
 
     # --- Final response packaging ---
     response_data["response"] = bot_reply
