@@ -83,7 +83,16 @@
     
         const data = await res.json();
         const botReply = data.response;
-    
+
+        // --- START CLIENT-SIDE DEBUG LOGS ---
+        console.log("CLIENT JS DEBUG: Received full data from /get_response:", JSON.stringify(data, null, 2));
+        if (data.suggestions) {
+            console.log("CLIENT JS DEBUG: Received suggestions array:", JSON.stringify(data.suggestions));
+        } else {
+            console.log("CLIENT JS DEBUG: No 'suggestions' key in received data or it's undefined.");
+        }
+        // --- END CLIENT-SIDE DEBUG LOGS ---
+        
         document.getElementById("loading-indicator").remove();
     
         chatBox.innerHTML += `
