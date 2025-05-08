@@ -159,6 +159,14 @@ def get_response():
 
     response_data["response"] = bot_reply
     session['last_suggestions'] = response_data.get("suggestions", []) # Store last suggestions for fallback
+    print("--- DEBUG START ---")
+    print(f"Current Viz State (at end of get_response): {session.get('visualization_questions_state')}") # State for NEXT turn
+    print(f"Handled Viz State (this turn): {current_viz_state}") # State handled in THIS turn
+    print(f"Outgoing Bot Reply: {bot_reply}")
+    print(f"Outgoing Suggestions: {response_data.get('suggestions')}")
+    print(f"Full Outgoing response_data: {response_data}")
+    print("--- DEBUG END ---")
+    
     return jsonify(response_data)
 
 
