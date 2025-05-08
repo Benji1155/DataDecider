@@ -9,7 +9,6 @@
 </head>
 <body>
   <div class="chat-container">
-    <!-- Chat messages area -->
     <div class="chat-messages" id="chat-box">
       <div class="chat-message bot-message">
         <div class="avatar"><i class="fas fa-robot"></i></div>
@@ -19,7 +18,6 @@
       </div>
     </div>
 
-    <!-- Suggestions and input area -->
     <div class="chat-bottom">
       <div class="suggestions">
         <button class="suggestion-btn">Auto-Mode</button>
@@ -39,24 +37,25 @@
     </div>
   </div>
 
-  <!-- JavaScript -->
-    <script>
+  <script>
       async function sendMessage(message = null) {
         const inputBox = document.getElementById("message-input");
         const chatBox = document.getElementById("chat-box");
         const sendButton = document.getElementById("send-button");
         const suggestionContainer = document.querySelector(".suggestions");
         const fileUpload = document.getElementById("file-upload");
-    
+
         const userMessage = message || inputBox.value.trim();
         if (!userMessage) return;
         inputBox.value = "";
-    
+
         inputBox.disabled = true;
         sendButton.disabled = true;
         fileUpload.disabled = true;
-        suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = true);
-    
+        if (suggestionContainer) { // Check if container exists before disabling its children
+            suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = true);
+        }
+
         chatBox.innerHTML += `
           <div class="chat-message user-message">
             <div class="avatar"><i class="fas fa-user"></i></div>
@@ -74,27 +73,30 @@
           </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
-    
+
         const res = await fetch("/get_response", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: userMessage })
         });
-    
+
         const data = await res.json();
         const botReply = data.response;
 
         // --- START CLIENT-SIDE DEBUG LOGS ---
         console.log("CLIENT JS DEBUG: Received full data from /get_response:", JSON.stringify(data, null, 2));
-        if (data.suggestions) {
-            console.log("CLIENT JS DEBUG: Received suggestions array:", JSON.stringify(data.suggestions));
+        if (data.hasOwnProperty('suggestions')) { // Check if 'suggestions' key exists
+            console.log("CLIENT JS DEBUG: Received 'suggestions' key. Value:", JSON.stringify(data.suggestions));
         } else {
-            console.log("CLIENT JS DEBUG: No 'suggestions' key in received data or it's undefined.");
+            console.log("CLIENT JS DEBUG: No 'suggestions' key in received data.");
         }
         // --- END CLIENT-SIDE DEBUG LOGS ---
-        
-        document.getElementById("loading-indicator").remove();
-    
+
+        const loadingIndicator = document.getElementById("loading-indicator");
+        if (loadingIndicator) {
+            loadingIndicator.remove();
+        }
+
         chatBox.innerHTML += `
           <div class="chat-message bot-message">
             <div class="avatar"><i class="fas fa-robot"></i></div>
@@ -104,34 +106,65 @@
             </div>
           </div>
         `;
+
+        // Update suggestions
+        if (!suggestionContainer) {
+            console.error("CLIENT JS ERROR: '.suggestions' container not found in DOM when trying to update!");
+        } else if (data.suggestions && Array.isArray(data.suggestions)) {
+            console.log("CLIENT JS DEBUG: Valid suggestions array found. About to update DOM. Current container HTML before clear:", suggestionContainer.innerHTML);
+            try {
+                suggestionContainer.innerHTML = ""; // Clear old suggestions
+                console.log("CLIENT JS DEBUG: Suggestion container cleared. New HTML after clear:", suggestionContainer.innerHTML);
+                data.suggestions.forEach((text, index) => {
+                    console.log(`CLIENT JS DEBUG: Creating button ${index + 1}: ${text}`);
+                    const btn = document.createElement("button");
+                    btn.className = "suggestion-btn";
+                    btn.textContent = text;
+                    btn.disabled = false; // Ensure new buttons are enabled
+                    btn.addEventListener("click", () => sendMessage(text));
+                    suggestionContainer.appendChild(btn);
+                });
+                console.log("CLIENT JS DEBUG: Finished updating suggestions. Final container HTML:", suggestionContainer.innerHTML);
+            } catch (e) {
+                console.error("CLIENT JS ERROR: Error during suggestion DOM update:", e);
+            }
+        } else {
+            console.log("CLIENT JS DEBUG: No valid 'suggestions' array in response (or it's not an array/is null). Clearing suggestions DOM (if container exists).");
+            if (suggestionContainer) {
+                suggestionContainer.innerHTML = ""; // Clear if no valid suggestions
+            }
+        }
+
         chatBox.scrollTop = chatBox.scrollHeight;
-    
+
         inputBox.disabled = false;
         sendButton.disabled = false;
         fileUpload.disabled = false;
-        suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = false);
+        if (suggestionContainer) { // Check if container exists before enabling its children
+            suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = false);
+        }
         inputBox.focus();
       }
-    
+
       document.getElementById("send-button").addEventListener("click", () => sendMessage());
       document.getElementById("message-input").addEventListener("keypress", e => {
         if (e.key === "Enter") sendMessage();
       });
-    
-      document.querySelectorAll(".suggestion-btn").forEach(button => {
+
+      document.querySelectorAll(".suggestions .suggestion-btn").forEach(button => { // Ensure specificity if needed
         button.addEventListener("click", () => sendMessage(button.textContent));
       });
-    
+
       document.getElementById("file-upload").addEventListener("change", async function () {
         const file = this.files[0];
         if (!file) return;
-    
+
         const formData = new FormData();
         formData.append("file", file);
-    
+
         const chatBox = document.getElementById("chat-box");
-        const suggestionContainer = document.querySelector(".suggestions");
-    
+        const suggestionContainer = document.querySelector(".suggestions"); // Ensure this is correctly scoped
+
         chatBox.innerHTML += `
           <div class="chat-message user-message">
             <div class="avatar"><i class="fas fa-user"></i></div>
@@ -144,19 +177,38 @@
           </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
-    
+
+        // Show loading indicator for bot response after file upload message
+        chatBox.innerHTML += `
+          <div class="chat-message bot-message loading" id="loading-indicator-upload">
+            <div class="avatar"><i class="fas fa-robot"></i></div>
+            <div class="message-content">
+              <div class="message-author">DataDecider</div>
+              <div class="message-bubble"><p class="dots">...</p></div>
+            </div>
+          </div>
+        `;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+
         const response = await fetch("/upload_file", {
           method: "POST",
           body: formData
         });
-    
+
         let result;
         try {
           result = await response.json();
         } catch (err) {
-          result = { response: "Oops! Something went wrong processing the response." };
+          console.error("CLIENT JS ERROR: Failed to parse JSON from /upload_file", err);
+          result = { response: "Oops! Something went wrong processing the server's response after file upload." };
         }
-    
+
+        const loadingIndicatorUpload = document.getElementById("loading-indicator-upload");
+        if (loadingIndicatorUpload) {
+            loadingIndicatorUpload.remove();
+        }
+
         if (response.ok) {
           chatBox.innerHTML += `
             <div class="chat-message bot-message">
@@ -170,16 +222,25 @@
               </div>
             </div>
           `;
-    
-          if (result.suggestions && Array.isArray(result.suggestions)) {
+
+          if (!suggestionContainer) {
+              console.error("CLIENT JS ERROR: '.suggestions' container not found in DOM after /upload_file!");
+          } else if (result.suggestions && Array.isArray(result.suggestions)) {
+            console.log("CLIENT JS DEBUG (upload_file): Valid suggestions received. Updating DOM.");
             suggestionContainer.innerHTML = "";
             result.suggestions.forEach(text => {
               const btn = document.createElement("button");
               btn.className = "suggestion-btn";
               btn.textContent = text;
+              btn.disabled = false; // Ensure buttons are enabled
               btn.addEventListener("click", () => sendMessage(text));
               suggestionContainer.appendChild(btn);
             });
+          } else {
+            console.log("CLIENT JS DEBUG (upload_file): No valid suggestions from /upload_file. Clearing DOM.");
+            if (suggestionContainer) {
+                suggestionContainer.innerHTML = "";
+            }
           }
         } else {
           chatBox.innerHTML += `
@@ -188,15 +249,18 @@
               <div class="message-content">
                 <div class="message-author">DataDecider</div>
                 <div class="message-bubble">
-                  <p>${result.response}</p>
+                  <p>${result.response || "Error uploading file or processing response."}</p>
                 </div>
               </div>
             </div>
           `;
+           if (suggestionContainer) { // Clear suggestions on error too
+                suggestionContainer.innerHTML = "";
+           }
         }
-    
+
         chatBox.scrollTop = chatBox.scrollHeight;
-        this.value = "";
+        this.value = ""; // Clear the file input
       });
     </script>
 </body>
