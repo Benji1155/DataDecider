@@ -7,3 +7,5 @@ pandas
 h5py
 spacy
 scikit-learn
+matplotlib
+seaborn
