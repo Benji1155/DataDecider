@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chatbot Interface</title>
+  <title>DataDecider</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
@@ -83,27 +83,16 @@
         const data = await res.json();
         const botReply = data.response;
 
-        // --- START CLIENT-SIDE DEBUG LOGS ---
-        console.log("CLIENT JS DEBUG: Received full data from /get_response:", JSON.stringify(data, null, 2));
-        if (data.hasOwnProperty('suggestions')) {
-            console.log("CLIENT JS DEBUG: Received 'suggestions' key. Value:", JSON.stringify(data.suggestions));
-        } else {
-            console.log("CLIENT JS DEBUG: No 'suggestions' key in received data.");
-        }
-        if (data.hasOwnProperty('plot_image')) {
-            console.log("CLIENT JS DEBUG: Received 'plot_image' key. Data length:", data.plot_image ? data.plot_image.length : 'null/undefined');
-        } else {
-             console.log("CLIENT JS DEBUG: No 'plot_image' key in received data.");
-        }
-        // --- END CLIENT-SIDE DEBUG LOGS ---
+        // Optional Debug Logs (keep commented out unless needed)
+        // console.log("CLIENT JS DEBUG: Received full data from /get_response:", JSON.stringify(data, null, 2));
+        // if (data.hasOwnProperty('suggestions')) { console.log("CLIENT JS DEBUG: Received 'suggestions' key. Value:", JSON.stringify(data.suggestions));}
+        // if (data.hasOwnProperty('plot_image')) { console.log("CLIENT JS DEBUG: Received 'plot_image' key. Data length:", data.plot_image ? data.plot_image.length : 'null/undefined');}
 
         const loadingIndicator = document.getElementById("loading-indicator");
         if (loadingIndicator) {
             loadingIndicator.remove();
         }
 
-        // --- DISPLAY BOT'S TEXT REPLY ---
-        // We create the message container first
         const botMessageElement = document.createElement('div');
         botMessageElement.className = 'chat-message bot-message';
         botMessageElement.innerHTML = `
@@ -111,19 +100,16 @@
             <div class="message-content">
                 <div class="message-author">DataDecider</div>
                 <div class="message-bubble">
-                    <p>${botReply}</p> 
+                    <p>${botReply}</p>
                 </div>
             </div>
         `;
         chatBox.appendChild(botMessageElement);
 
-
-        // --- *** ADDED CODE TO DISPLAY PLOT IMAGE *** ---
         if (data.plot_image) {
-            // Find the message bubble we just added
             const messageBubble = botMessageElement.querySelector('.message-bubble');
             if (messageBubble) {
-                console.log("CLIENT JS DEBUG: Found plot_image data. Attempting to display.");
+                console.log("CLIENT JS: Found plot_image data. Attempting to display.");
                 messageBubble.innerHTML += `
                     <p style='margin-top:10px; font-size: 0.9em;'>Here is the plot:</p>
                     <img src="${data.plot_image}"
@@ -131,45 +117,41 @@
                          style="max-width: 100%; height: auto; border-radius: 8px; margin-top: 5px; border: 1px solid #eee;"
                          onerror="console.error('CLIENT JS ERROR: Image failed to load. Source might be invalid or too long.'); this.alt='Plot failed to load'; this.style.display='none';" />
                 `;
-                console.log("CLIENT JS DEBUG: Appended image to bubble.");
+                console.log("CLIENT JS: Appended image to bubble.");
             } else {
                 console.error("CLIENT JS ERROR: Could not find message bubble to append image to!");
             }
         } else {
-            console.log("CLIENT JS DEBUG: No plot_image data found in this response.");
+           // console.log("CLIENT JS: No plot_image data found in this response."); // Keep commented unless needed
         }
-        // --- *** END OF ADDED CODE *** ---
-
 
         // Update suggestions
         if (!suggestionContainer) {
             console.error("CLIENT JS ERROR: '.suggestions' container not found in DOM when trying to update!");
         } else if (data.suggestions && Array.isArray(data.suggestions)) {
-            console.log("CLIENT JS DEBUG: Valid suggestions array found. Updating DOM.");
+            // console.log("CLIENT JS DEBUG: Valid suggestions array found. Updating DOM."); // Keep commented unless needed
             try {
                 suggestionContainer.innerHTML = "";
-                console.log("CLIENT JS DEBUG: Suggestion container cleared.");
                 data.suggestions.forEach((text, index) => {
-                    // console.log(`CLIENT JS DEBUG: Creating button ${index + 1}: ${text}`); // Keep this commented unless debugging suggestions specifically
                     const btn = document.createElement("button");
                     btn.className = "suggestion-btn";
                     btn.textContent = text;
                     btn.disabled = false;
-                    btn.addEventListener("click", () => sendMessage(text));
+                    // *** REMOVED individual listener attachment ***
+                    // btn.addEventListener("click", () => sendMessage(text));
                     suggestionContainer.appendChild(btn);
                 });
-                // console.log("CLIENT JS DEBUG: Finished updating suggestions."); // Keep commented unless needed
             } catch (e) {
                 console.error("CLIENT JS ERROR: Error during suggestion DOM update:", e);
             }
         } else {
-            console.log("CLIENT JS DEBUG: No valid 'suggestions' array. Clearing suggestions DOM.");
+            // console.log("CLIENT JS DEBUG: No valid 'suggestions' array. Clearing suggestions DOM."); // Keep commented unless needed
             if (suggestionContainer) {
                 suggestionContainer.innerHTML = "";
             }
         }
 
-        chatBox.scrollTop = chatBox.scrollHeight; // Scroll after ALL content is added
+        chatBox.scrollTop = chatBox.scrollHeight;
 
         inputBox.disabled = false;
         sendButton.disabled = false;
@@ -180,22 +162,27 @@
         inputBox.focus();
       }
 
-      // --- (Keep the rest of your script: event listeners, file upload handler) ---
+      // --- Event Listeners ---
 
       document.getElementById("send-button").addEventListener("click", () => sendMessage());
       document.getElementById("message-input").addEventListener("keypress", e => {
         if (e.key === "Enter") sendMessage();
       });
 
-      // Re-attach listener to the container for dynamically added buttons
+      // Use event delegation for ALL suggestion button clicks (static and dynamic)
       document.querySelector(".suggestions").addEventListener("click", function(event) {
+          // Check if the clicked element is actually a button with the correct class
           if (event.target && event.target.classList.contains('suggestion-btn')) {
-              sendMessage(event.target.textContent);
+              // Ensure button isn't disabled before sending message
+              if (!event.target.disabled) {
+                   console.log(`Suggestion button clicked: ${event.target.textContent}`); // Optional log
+                   sendMessage(event.target.textContent);
+              }
           }
       });
-      // Remove the old listener attaching to initial buttons only:
-      // document.querySelectorAll(".suggestions .suggestion-btn").forEach(button => { ... });
 
+      // *** REMOVED the old listener that targeted initial buttons only ***
+      // document.querySelectorAll(".suggestions .suggestion-btn").forEach(button => { ... });
 
       document.getElementById("file-upload").addEventListener("change", async function () {
         const file = this.files[0];
@@ -249,7 +236,6 @@
             loadingIndicatorUpload.remove();
         }
 
-        // Display bot response (including preview if present)
         const uploadBotMessageElement = document.createElement('div');
         uploadBotMessageElement.className = 'chat-message bot-message';
         uploadBotMessageElement.innerHTML = `
@@ -264,24 +250,22 @@
         `;
         chatBox.appendChild(uploadBotMessageElement);
 
-
-        // Update suggestions container specifically for upload response
         if (!suggestionContainer) {
             console.error("CLIENT JS ERROR: '.suggestions' container not found in DOM after /upload_file!");
         } else if (result.suggestions && Array.isArray(result.suggestions)) {
-            console.log("CLIENT JS DEBUG (upload_file): Valid suggestions received. Updating DOM.");
+            // console.log("CLIENT JS DEBUG (upload_file): Valid suggestions received. Updating DOM."); // Keep commented unless needed
             suggestionContainer.innerHTML = "";
             result.suggestions.forEach(text => {
               const btn = document.createElement("button");
               btn.className = "suggestion-btn";
               btn.textContent = text;
               btn.disabled = false;
-              // Listener is handled by the parent container now
-              // btn.addEventListener("click", () => sendMessage(text)); 
+              // *** REMOVED individual listener attachment ***
+              // btn.addEventListener("click", () => sendMessage(text));
               suggestionContainer.appendChild(btn);
             });
         } else {
-            console.log("CLIENT JS DEBUG (upload_file): No valid suggestions from /upload_file. Clearing DOM.");
+            // console.log("CLIENT JS DEBUG (upload_file): No valid suggestions from /upload_file. Clearing DOM."); // Keep commented unless needed
             if (suggestionContainer) {
                 suggestionContainer.innerHTML = "";
             }
