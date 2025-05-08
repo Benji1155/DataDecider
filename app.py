@@ -50,40 +50,92 @@ def get_simplified_column_types(df):
 
 def suggest_charts_based_on_answers(user_answers, df_sample):
     """Suggests chart types based on user preferences and data sample."""
-    suggestions = []
-    if df_sample is None or df_sample.empty: return [{"name": "Cannot suggest: Data sample missing or unreadable.", "type": "Info"}]
+    suggestions = [] # Initialize empty list
+    if df_sample is None or df_sample.empty:
+        return [{"name": "Cannot suggest: Data sample missing or unreadable.", "type": "Info"}]
+
     col_types = get_simplified_column_types(df_sample)
-    numerical_cols = [c for c,t in col_types.items() if t=='numerical']; categorical_cols = [c for c,t in col_types.items() if t in ['categorical', 'categorical_numeric']]; distributable_numeric_cols = [c for c,t in col_types.items() if t in ['numerical', 'categorical_numeric']]; datetime_cols = [c for c,t in col_types.items() if t=='datetime']
-    ua_count, ua_types, ua_msg = user_answers.get('variable_count','').lower(), user_answers.get('variable_types','').lower(), user_answers.get('message_insight','').lower()
-    # --- Suggestion Rules ---
-    if ("one" in ua_count or "1" in ua_count) and ("dist" in ua_msg or "spread" in ua_msg or "summ" in ua_msg) and ("num" in ua_types or "cat" in ua_types or "any" in ua_types or not ua_types) and distributable_numeric_cols: suggestions.extend([{"name": "Histogram", "for_col": col, "reason": f"Distribution of '{col}'.", "required_cols_specific": [col]}, {"name": "Box Plot", "for_col": col, "reason": f"Summary of '{col}'.", "required_cols_specific": [col]}, {"name": "Density Plot", "for_col": col, "reason": f"Smooth distribution of '{col}'.", "required_cols_specific": [col]}] for col in distributable_numeric_cols)
+    numerical_cols = [c for c,t in col_types.items() if t=='numerical']
+    categorical_cols = [c for c,t in col_types.items() if t in ['categorical', 'categorical_numeric']]
+    distributable_numeric_cols = [c for c,t in col_types.items() if t in ['numerical', 'categorical_numeric']]
+    datetime_cols = [c for c,t in col_types.items() if t=='datetime']
+
+    ua_count = user_answers.get('variable_count','').lower()
+    ua_types = user_answers.get('variable_types','').lower()
+    ua_msg = user_answers.get('message_insight','').lower()
+
+    # --- Suggestion Rules (Using explicit loops and .append) ---
+
+    # Rule: Distribution of ONE NUMERICAL/RATING variable
+    if ("one" in ua_count or "1" in ua_count) and ("dist" in ua_msg or "spread" in ua_msg or "summ" in ua_msg) and ("num" in ua_types or "cat" in ua_types or "any" in ua_types or not ua_types) and distributable_numeric_cols:
+        for col in distributable_numeric_cols:
+            suggestions.append({"name": "Histogram", "for_col": col, "type": "Univariate Numerical", "reason": f"Distribution of '{col}'.", "required_cols_specific": [col]})
+            suggestions.append({"name": "Box Plot", "for_col": col, "type": "Univariate Numerical", "reason": f"Summary of '{col}'.", "required_cols_specific": [col]})
+            suggestions.append({"name": "Density Plot", "for_col": col, "type": "Univariate Numerical", "reason": f"Smooth distribution of '{col}'.", "required_cols_specific": [col]})
+
+    # Rule: Frequency/Proportion of ONE CATEGORICAL variable
     if ("one" in ua_count or "1" in ua_count) and ("prop" in ua_msg or "share" in ua_msg or "freq" in ua_msg or "count" in ua_msg or "val" in ua_msg) and ("cat" in ua_types or "any" in ua_types or not ua_types) and categorical_cols:
-        for col in categorical_cols: # CORRECTED LOOP STRUCTURE
+        for col in categorical_cols:
             suggestions.append({"name": "Bar Chart (Counts)", "for_col": col, "type": "Univariate Categorical", "reason": f"Shows counts for categories in '{col}'.", "required_cols_specific": [col]})
             try:
-                if col in df_sample.columns: nunique = df_sample[col].nunique(dropna=True);
-                else: nunique = 0 # Assume 0 if column missing in sample
+                if col in df_sample.columns: nunique = df_sample[col].nunique(dropna=True)
+                else: nunique = 0
                 if 1 < nunique < 8: suggestions.append({"name": "Pie Chart", "for_col": col, "type": "Univariate Categorical", "reason": f"Shows proportions for '{col}'.", "required_cols_specific": [col]})
             except Exception as e: print(f"Warning during pie chart suggestion for {col}: {e}")
-    if ("two" in ua_count or "2" in ua_count) and ("relat" in ua_msg or "corr" in ua_msg or "scat" in ua_msg) and ("num" in ua_types or "any" in ua_types or not ua_types) and len(numerical_cols)>=2: suggestions.extend([{"name": "Scatter Plot", "for_cols": f"{c1} & {c2}", "reason": f"Relationship: '{c1}' vs '{c2}'.", "required_cols_specific": [c1, c2]} for i,c1 in enumerate(numerical_cols) for j,c2 in enumerate(numerical_cols) if j>i])
+
+    # Rule: TWO NUMERICAL variables (Relationship)
+    if ("two" in ua_count or "2" in ua_count) and ("relat" in ua_msg or "corr" in ua_msg or "scat" in ua_msg) and ("num" in ua_types or "any" in ua_types or not ua_types) and len(numerical_cols)>=2:
+        for i,c1 in enumerate(numerical_cols):
+            for j,c2 in enumerate(numerical_cols):
+                 if j > i: suggestions.append({"name": "Scatter Plot", "for_cols": f"{c1} & {c2}", "reason": f"Relationship: '{c1}' vs '{c2}'.", "required_cols_specific": [c1, c2]})
+
+    # Rule: ONE NUMERICAL/DISTRIBUTABLE vs ONE CATEGORICAL (Comparison)
     if ("two" in ua_count or "2" in ua_count) and ("comp" in ua_msg or "across" in ua_msg or "group" in ua_msg or "dist" in ua_msg) and ("mix" in ua_types or "cat" in ua_types or "num" in ua_types or "any" in ua_types or not ua_types) and distributable_numeric_cols and categorical_cols:
-        suggestions.extend([{"name": "Box Plots (by Category)", "for_cols": f"{num_col} by {cat_col}", "reason": f"Distribution of '{num_col}' across '{cat_col}'.", "required_cols_specific": [cat_col, num_col]}, {"name": "Violin Plots (by Category)", "for_cols": f"{num_col} by {cat_col}", "reason": f"Density/distribution of '{num_col}' across '{cat_col}'.", "required_cols_specific": [cat_col, num_col]}] for num_col in distributable_numeric_cols for cat_col in categorical_cols if num_col != cat_col)
-        if numerical_cols and categorical_cols: suggestions.extend([{"name": "Bar Chart (Aggregated)", "for_cols": f"Avg of {num_col} by {cat_col}", "reason": f"Average '{num_col}' for each category in '{cat_col}'.", "required_cols_specific": [cat_col, num_col]} for num_col in numerical_cols for cat_col in categorical_cols if num_col != cat_col])
-    if ("two" in ua_count or "2" in ua_count) and ("relat" in ua_msg or "comp" in ua_msg or "cont" in ua_msg or "joint" in ua_msg) and ("cat" in ua_types or "any" in ua_types or not ua_types) and len(categorical_cols)>=2: suggestions.extend([{"name": "Grouped Bar Chart", "for_cols": f"{c1} & {c2}", "reason": f"Counts of '{c1}' grouped by '{c2}'.", "required_cols_specific": [c1, c2]}, {"name": "Heatmap (Counts)", "for_cols": f"{c1} & {c2}", "reason": f"Co-occurrence frequency of '{c1}' & '{c2}'.", "required_cols_specific": [c1, c2]}] for i,c1 in enumerate(categorical_cols) for j,c2 in enumerate(categorical_cols) if j>i)
-    if (("two" in ua_count or "2" in ua_count) or "time" in ua_types or "trend" in ua_msg) and datetime_cols and numerical_cols: suggestions.extend([{"name": "Line Chart", "for_cols": f"{num} over {dt}", "reason": f"Trend of '{num}' over '{dt}'.", "required_cols_specific": [dt, num]}, {"name": "Area Chart", "for_cols": f"{num} over {dt}", "reason": f"Cumulative trend of '{num}' over '{dt}'.", "required_cols_specific": [dt, num]}] for dt in datetime_cols for num in numerical_cols)
+        for num_col in distributable_numeric_cols:
+            for cat_col in categorical_cols:
+                if num_col != cat_col:
+                    suggestions.append({"name": "Box Plots (by Category)", "for_cols": f"{num_col} by {cat_col}", "reason": f"Distribution of '{num_col}' across '{cat_col}'.", "required_cols_specific": [cat_col, num_col]})
+                    suggestions.append({"name": "Violin Plots (by Category)", "for_cols": f"{num_col} by {cat_col}", "reason": f"Density/distribution of '{num_col}' across '{cat_col}'.", "required_cols_specific": [cat_col, num_col]})
+        if numerical_cols and categorical_cols: # Aggregated needs strictly numerical
+            for num_col in numerical_cols:
+                 for cat_col in categorical_cols:
+                     if num_col != cat_col: suggestions.append({"name": "Bar Chart (Aggregated)", "for_cols": f"Avg of {num_col} by {cat_col}", "reason": f"Average '{num_col}' for each category in '{cat_col}'.", "required_cols_specific": [cat_col, num_col]})
+
+    # Rule: TWO CATEGORICAL variables
+    if ("two" in ua_count or "2" in ua_count) and ("relat" in ua_msg or "comp" in ua_msg or "cont" in ua_msg or "joint" in ua_msg) and ("cat" in ua_types or "any" in ua_types or not ua_types) and len(categorical_cols)>=2:
+        for i,c1 in enumerate(categorical_cols):
+            for j,c2 in enumerate(categorical_cols):
+                 if j > i:
+                      suggestions.append({"name": "Grouped Bar Chart", "for_cols": f"{c1} & {c2}", "reason": f"Counts of '{c1}' grouped by '{c2}'.", "required_cols_specific": [c1, c2]})
+                      suggestions.append({"name": "Heatmap (Counts)", "for_cols": f"{c1} & {c2}", "reason": f"Co-occurrence frequency of '{c1}' & '{c2}'.", "required_cols_specific": [c1, c2]})
+
+    # Rule: TIME SERIES (DATETIME vs NUMERICAL)
+    if (("two" in ua_count or "2" in ua_count) or "time" in ua_types or "trend" in ua_msg) and datetime_cols and numerical_cols:
+        for dt in datetime_cols:
+            for num in numerical_cols:
+                 suggestions.append({"name": "Line Chart", "for_cols": f"{num} over {dt}", "reason": f"Trend of '{num}' over '{dt}'.", "required_cols_specific": [dt, num]})
+                 suggestions.append({"name": "Area Chart", "for_cols": f"{num} over {dt}", "reason": f"Cumulative trend of '{num}' over '{dt}'.", "required_cols_specific": [dt, num]})
+
+    # Rule: MULTIPLE VARIABLES
     if ("more" in ua_count or "mult" in ua_count or "pair" in ua_msg or "heat" in ua_msg or "para" in ua_msg) or ((ua_count not in ["one","1","two","2"]) and (len(numerical_cols)>2 or len(categorical_cols)>2)):
-        if len(numerical_cols)>=3: suggestions.extend([{"name": "Pair Plot", "reason": "Pairwise relationships (numerical).", "required_cols_specific": numerical_cols[:min(4,len(numerical_cols))]}, {"name": "Correlation Heatmap", "reason": "Correlation matrix (numerical).", "required_cols_specific": numerical_cols}, {"name": "Parallel Coordinates Plot", "reason": "Compare multiple numerical variables.", "required_cols_specific": numerical_cols[:min(6,len(numerical_cols))]}])
+        if len(numerical_cols)>=3:
+            suggestions.append({"name": "Pair Plot", "reason": "Pairwise relationships (numerical).", "required_cols_specific": numerical_cols[:min(4,len(numerical_cols))]})
+            suggestions.append({"name": "Correlation Heatmap", "reason": "Correlation matrix (numerical).", "required_cols_specific": numerical_cols})
+            suggestions.append({"name": "Parallel Coordinates Plot", "reason": "Compare multiple numerical variables.", "required_cols_specific": numerical_cols[:min(6,len(numerical_cols))]})
+
     # --- Deduplication Logic (Multi-line structure) ---
-    final_suggestions_dict = {}; suggestions_order = []
-    for s in suggestions:
+    final_suggestions_dict = {}
+    suggestions_order = []
+    for s in suggestions: # Now 's' should definitely be a dictionary
         req_cols = s.get("required_cols_specific", [])
         s_key_cols_str = "_".join(sorted(req_cols)) if req_cols else ""
-        s_key = f"{s['name']}_{s_key_cols_str}"
+        s_key = f"{s.get('name', 'UnknownChart')}_{s_key_cols_str}" # Safer get for name
         if s_key not in final_suggestions_dict:
             final_suggestions_dict[s_key] = s
             suggestions_order.append(s_key)
     final_suggestions = [final_suggestions_dict[key] for key in suggestions_order]
     # --- End Deduplication ---
+
     if not final_suggestions: final_suggestions.append({"name": "No specific chart matched well", "type": "Info", "reason": "Criteria didn't match. Pick columns manually?", "required_cols_specific": []})
     if not any(s['name']=="Pick columns manually" for s in final_suggestions): final_suggestions.append({"name": "Pick columns manually", "type": "Action", "reason": "Choose columns yourself.", "required_cols_specific": []})
     return final_suggestions
