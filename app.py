@@ -225,15 +225,19 @@ def generate_plot_and_get_uri(filepath, chart_type, columns):
     try:
         # Read only necessary columns first for efficiency if possible
         df_full = pd.read_csv(filepath) if filepath.endswith(".csv") else pd.read_excel(filepath)
+        # Ensure we have the necessary columns before proceeding
         if not all(col in df_full.columns for col in columns):
              missing_cols = [col for col in columns if col not in df_full.columns]
              return None, f"Column(s) not found: {', '.join(missing_cols)}."
+        # Now subset to only needed columns for plotting (after validation confirms they exist)
         df_plot = df_full[columns].copy() # Subset AFTER ensuring columns exist in full df
+
     except Exception as e:
         print(f"Error reading dataframe ('{filepath}') for plotting: {e}")
         return None, f"Error reading data file: {str(e)[:100]}"
 
     # *** Run Validation ***
+    # Note: Validation happens before internal chart type mapping
     validation_error = validate_columns_for_chart(chart_type, columns, df_plot)
     if validation_error:
         print(f"Plotting Validation Error for {chart_type}: {validation_error}")
@@ -243,7 +247,7 @@ def generate_plot_and_get_uri(filepath, chart_type, columns):
     plt.figure(figsize=(7.5, 5))
     plt.style.use('seaborn-v0_8-whitegrid')
     original_chart_type = chart_type
-    plot_title_detail = "" # For adding column info to title
+    plot_title_detail = ""
 
     try:
         print(f"Attempting to generate plot: {chart_type} with columns: {columns}")
@@ -269,21 +273,33 @@ def generate_plot_and_get_uri(filepath, chart_type, columns):
         if chart_type == "Histogram": sns.histplot(data=df_plot, x=columns[0], kde=True); plot_title = f"Histogram of {columns[0]}"
         elif chart_type == "Box Plot": sns.boxplot(data=df_plot, y=columns[0]); plot_title = f"Box Plot of {columns[0]}"
         elif chart_type == "Density Plot": sns.kdeplot(data=df_plot, x=columns[0], fill=True); plot_title = f"Density Plot of {columns[0]}"
-        elif chart_type == "Bar Chart (Counts)": counts = df_plot[columns[0]].value_counts().nlargest(20); sns.barplot(x=counts.index, y=counts.values); plot_title = f"Top Counts for {columns[0]}"; plt.ylabel("Count"); plt.xlabel(columns[0]); plt.xticks(rotation=65, ha='right', fontsize=9) # More rotation, smaller font
-        elif chart_type == "Pie Chart": counts = df_plot[columns[0]].value_counts(); effective_counts = counts.nlargest(7); if len(counts) > 7: effective_counts.loc['Other'] = counts.iloc[7:].sum(); plt.pie(effective_counts, labels=effective_counts.index, autopct='%1.1f%%', startangle=90, pctdistance=0.85); plot_title = f"Pie Chart of {columns[0]}" ; plt.axis('equal')
+        elif chart_type == "Bar Chart (Counts)": counts = df_plot[columns[0]].value_counts().nlargest(20); sns.barplot(x=counts.index, y=counts.values); plot_title = f"Top Counts for {columns[0]}"; plt.ylabel("Count"); plt.xlabel(columns[0]); plt.xticks(rotation=65, ha='right', fontsize=9)
+
+        # --- CORRECTED PIE CHART LOGIC ---
+        elif chart_type == "Pie Chart":
+            counts = df_plot[columns[0]].value_counts()
+            effective_counts = counts.nlargest(7) # Show top 7 slices max
+            if len(counts) > 7:
+                # Combine remaining into 'Other'
+                effective_counts.loc['Other'] = counts.iloc[7:].sum()
+            plt.pie(effective_counts, labels=effective_counts.index, autopct='%1.1f%%', startangle=90, pctdistance=0.85)
+            plot_title = f"Pie Chart of {columns[0]}"
+            plt.axis('equal') # Equal aspect ratio ensures pie is drawn as a circle.
+        # --- END CORRECTION ---
+
         elif chart_type == "Scatter Plot": sns.scatterplot(data=df_plot, x=columns[0], y=columns[1]); plot_title = f"Scatter: {columns[0]} vs {columns[1]}"; plt.xlabel(columns[0]); plt.ylabel(columns[1])
         elif chart_type == "Line Chart":
             df_to_plot = df_plot.copy(); sort_col = columns[0]
-            try: # Attempt conversion if x-axis looks like datetime but isn't recognized
+            try:
                 if not pd.api.types.is_datetime64_any_dtype(df_to_plot[sort_col]): df_to_plot[sort_col] = pd.to_datetime(df_to_plot[sort_col])
                 df_to_plot = df_to_plot.sort_values(by=sort_col)
-            except: pass # Ignore if conversion fails, try sorting anyway
+            except: pass
             if pd.api.types.is_numeric_dtype(df_to_plot[sort_col]): df_to_plot = df_to_plot.sort_values(by=sort_col)
             sns.lineplot(data=df_to_plot, x=columns[0], y=columns[1]); plot_title = f"Line: {columns[1]} over {columns[0]}"; plt.xlabel(columns[0]); plt.ylabel(columns[1]); plt.xticks(rotation=45, ha='right', fontsize=9)
         elif chart_type == "Box Plots (by Category)": sns.boxplot(data=df_plot, x=columns[0], y=columns[1]); plot_title = f"Box Plots: {columns[1]} by {columns[0]}"; plt.xlabel(columns[0]); plt.ylabel(columns[1]); plt.xticks(rotation=65, ha='right', fontsize=9)
         elif chart_type == "Violin Plots (by Category)": sns.violinplot(data=df_plot, x=columns[0], y=columns[1]); plot_title = f"Violin Plots: {columns[1]} by {columns[0]}"; plt.xlabel(columns[0]); plt.ylabel(columns[1]); plt.xticks(rotation=65, ha='right', fontsize=9)
         elif chart_type == "Bar Chart (Aggregated)":
-             cat_col, num_col = columns[0], columns[1] # Assumes order from mapping step
+             cat_col, num_col = columns[0], columns[1]
              agg_data = df_plot.groupby(cat_col)[num_col].mean().nlargest(20); sns.barplot(x=agg_data.index, y=agg_data.values); plot_title = f"Mean of {num_col} by {cat_col}"; plt.xlabel(cat_col); plt.ylabel(f"Mean of {num_col}"); plt.xticks(rotation=65, ha='right', fontsize=9)
         elif chart_type == "Grouped Bar Chart":
              col1_top_cats = df_plot[columns[0]].value_counts().nlargest(10).index; col2_top_cats = df_plot[columns[1]].value_counts().nlargest(5).index
