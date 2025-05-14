@@ -4,6 +4,7 @@ import os
 import re # Import regex for cleaning
 from typing import List, Optional
 
+import numpy as np
 import pandas as pd
 from flask import Flask, jsonify, render_template, request, session
 from pandas.api.types import (is_datetime64_any_dtype, is_numeric_dtype,
