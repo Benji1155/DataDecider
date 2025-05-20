@@ -2,33 +2,38 @@
   "intents": [
     {
       "tag": "greeting",
-      "patterns": ["Hi", "Hello", "Hey", "Good morning", "Good evening"],
-      "responses": ["Hello! Please let me know how you would like help.", "Hi there, how can I help?", "Greetings! How can I help you?"]
+      "patterns": [ "Hi", "Hello", "Hey", "Good morning", "Good evening" ],
+      "responses": [ "Hello! Please let me know how you would like help.", "Hi there, how can I help?", "Greetings! How can I help you?" ]
     },
     {
       "tag": "goodbye",
-      "patterns": ["Bye", "See you later", "Goodbye"],
-      "responses": ["Goodbye!", "See you later!", "Talk to you soon!"]
+      "patterns": [ "Bye", "See you later", "Goodbye" ],
+      "responses": [ "Goodbye!", "See you later!", "Talk to you soon!" ]
     },
     {
       "tag": "thanks",
-      "patterns": ["Thanks", "Thank you", "That's helpful"],
-      "responses": ["You're welcome!", "Anytime!", "No problem!"]
+      "patterns": [ "Thanks", "Thank you", "That's helpful" ],
+      "responses": [ "You're welcome!", "Anytime!", "No problem!" ]
     },
-	{
-	  "tag": "general_visualization",
-	  "patterns": ["Visualization", "Visualizations", "Visualize", "Help me visualize", "Help me with a graph", "Generate a visualization for this.", "I need a data visualization.", "Can you graph this out?", "Display this information visually.", "Make a diagram of this.", "Help me make sense of this with a graph."],
-	  "responses": ["Sure thing! If you have a dataset/excel sheet could you please upload it now so I can help you better? If not thats okay too.", "Of course I can. If you have a dataset/excel sheet could you please upload it now so I can help you better? If not thats okay too.!", "general_visualization!"]
-	},
-		{
-	  "tag": "upload_successful",
-	  "patterns": ["uploaded", "uploaded successfully"],
-	  "responses": ["Thanks for that."]
-	},
-	{
-	  "tag": "specific_visualization",
-	  "patterns": ["Show me a chart of this data.", "Plot this data for me.", "Turn this into a chart.", "I want to see a trend line.", "Show this as a bar chart.", "Convert this into a pie chart.", "Make a scatter plot of this.", "Can you create a heatmap?", "Draw a flowchart for this.", "Illustrate this data with a chart."],
-	  "responses": ["specific_visualization!", "specific_visualization!", "specific_visualization!"]
-	}
+    {
+      "tag": "general_visualization",
+      "patterns": [ "Visualization", "Visualizations", "Visualize", "Help me visualize", "Help me with a graph", "Generate a visualization for this.", "I need a data visualization.", "Can you graph this out?", "Display this information visually.", "Make a diagram of this.", "Help me make sense of this with a graph." ],
+      "responses": [ "Sure thing! If you have a dataset/excel sheet could you please upload it now so I can help you better? If not thats okay too.", "Of course I can. If you have a dataset/excel sheet could you please upload it now so I can help you better? If not thats okay too.!" ]
+    },
+    {
+      "tag": "stats_tests",
+      "patterns": [ "Test", "tests", "Help select statistical test"],
+      "responses": [ "Going down test tree"]
+    },
+    {
+      "tag": "upload_successful",
+      "patterns": [ "uploaded", "uploaded successfully" ],
+      "responses": [ "Thanks for that." ]
+    },
+    {
+      "tag": "specific_visualization",
+      "patterns": [ "Show me a chart of this data.", "Plot this data for me.", "Turn this into a chart.", "I want to see a trend line.", "Show this as a bar chart.", "Convert this into a pie chart.", "Make a scatter plot of this.", "Can you create a heatmap?", "Draw a flowchart for this.", "Illustrate this data with a chart." ],
+      "responses": [ "specific_visualization!", "specific_visualization!", "specific_visualization!" ]
+    }
   ]
 }

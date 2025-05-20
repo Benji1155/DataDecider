@@ -13,17 +13,17 @@
       <div class="chat-message bot-message">
         <div class="avatar"><i class="fas fa-robot"></i></div>
         <div class="message-bubble">
-          <p>Hello! How can I assist you today?</p>
+          <p>Hello! How can I assist you today? Please upload a CSV or Excel file to get started.</p>
         </div>
       </div>
     </div>
 
     <div class="chat-bottom">
       <div class="suggestions">
-        <button class="suggestion-btn">Auto-Mode</button>
-        <button class="suggestion-btn">Help Select Statistical Tests</button>
-        <button class="suggestion-btn">Help Select Visualizations</button>
-        <button class="suggestion-btn">I'm Not Sure</button>
+        <button class="suggestion-btn suggestion-btn-initial">Auto-Mode</button>
+        <button class="suggestion-btn suggestion-btn-initial">Help Select Statistical Tests</button>
+        <button class="suggestion-btn suggestion-btn-initial">Help Select Visualizations</button>
+        <button class="suggestion-btn suggestion-btn-control">I'm Not Sure</button>
       </div>
 
       <div class="chat-input">
@@ -56,15 +56,22 @@
             suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = true);
         }
 
-        chatBox.innerHTML += `
-          <div class="chat-message user-message">
+        // Add user message to chat (escape user input to prevent XSS)
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.className = 'chat-message user-message';
+        userMessageDiv.innerHTML = `
             <div class="avatar"><i class="fas fa-user"></i></div>
             <div class="message-content">
-              <div class="message-author">You</div>
-              <div class="message-bubble"><p>${userMessage}</p></div>
-            </div>
-          </div>
-          <div class="chat-message bot-message loading" id="loading-indicator">
+                <div class="message-author">You</div>
+                <div class="message-bubble"><p></p></div>
+            </div>`;
+        userMessageDiv.querySelector('.message-bubble p').textContent = userMessage; // Safely set text
+        chatBox.appendChild(userMessageDiv);
+        
+        // Add loading indicator
+        const loadingId = `loading-indicator-${Date.now()}`;
+        chatBox.innerHTML += `
+          <div class="chat-message bot-message loading" id="${loadingId}">
             <div class="avatar"><i class="fas fa-robot"></i></div>
             <div class="message-content">
               <div class="message-author">DataDecider</div>
@@ -81,14 +88,9 @@
         });
 
         const data = await res.json();
-        const botReply = data.response;
+        const botReplyHTML = data.response; // Assume bot replies can be HTML
 
-        // Optional Debug Logs (keep commented out unless needed)
-        // console.log("CLIENT JS DEBUG: Received full data from /get_response:", JSON.stringify(data, null, 2));
-        // if (data.hasOwnProperty('suggestions')) { console.log("CLIENT JS DEBUG: Received 'suggestions' key. Value:", JSON.stringify(data.suggestions));}
-        // if (data.hasOwnProperty('plot_image')) { console.log("CLIENT JS DEBUG: Received 'plot_image' key. Data length:", data.plot_image ? data.plot_image.length : 'null/undefined');}
-
-        const loadingIndicator = document.getElementById("loading-indicator");
+        const loadingIndicator = document.getElementById(loadingId);
         if (loadingIndicator) {
             loadingIndicator.remove();
         }
@@ -96,63 +98,64 @@
         const botMessageElement = document.createElement('div');
         botMessageElement.className = 'chat-message bot-message';
         botMessageElement.innerHTML = `
-            <div class="avatar"><i class="fas fa-robot"></i></div>
-            <div class="message-content">
-                <div class="message-author">DataDecider</div>
-                <div class="message-bubble">
-                    <p>${botReply}</p>
-                </div>
+          <div class="avatar"><i class="fas fa-robot"></i></div>
+          <div class="message-content">
+            <div class="message-author">DataDecider</div>
+            <div class="message-bubble">
+              ${botReplyHTML} 
             </div>
+          </div>
         `;
         chatBox.appendChild(botMessageElement);
 
         if (data.plot_image) {
             const messageBubble = botMessageElement.querySelector('.message-bubble');
             if (messageBubble) {
-                console.log("CLIENT JS: Found plot_image data. Attempting to display.");
-                messageBubble.innerHTML += `
-                    <p style='margin-top:10px; font-size: 0.9em;'>Here is the plot:</p>
-                    <img src="${data.plot_image}"
-                         alt="Generated Plot"
-                         style="max-width: 100%; height: auto; border-radius: 8px; margin-top: 5px; border: 1px solid #eee;"
-                         onerror="console.error('CLIENT JS ERROR: Image failed to load. Source might be invalid or too long.'); this.alt='Plot failed to load'; this.style.display='none';" />
-                `;
-                console.log("CLIENT JS: Appended image to bubble.");
-            } else {
-                console.error("CLIENT JS ERROR: Could not find message bubble to append image to!");
+                const plotTitleP = document.createElement('p');
+                plotTitleP.style.marginTop = '10px';
+                plotTitleP.style.fontSize = '0.9em';
+                plotTitleP.innerHTML = "Here is the plot:";
+                messageBubble.appendChild(plotTitleP);
+
+                const imgElement = document.createElement('img');
+                imgElement.src = data.plot_image;
+                imgElement.alt = "Generated Plot";
+                imgElement.style.maxWidth = "100%";
+                imgElement.style.height = "auto";
+                imgElement.style.borderRadius = "8px";
+                imgElement.style.marginTop = "5px";
+                imgElement.style.border = "1px solid #eee";
+                imgElement.onerror = function() {
+                    this.alt='Plot failed to load'; this.style.display='none';
+                };
+                messageBubble.appendChild(imgElement);
             }
-        } else {
-           // console.log("CLIENT JS: No plot_image data found in this response."); // Keep commented unless needed
         }
 
-        // Update suggestions
         if (!suggestionContainer) {
-            console.error("CLIENT JS ERROR: '.suggestions' container not found in DOM when trying to update!");
+            console.error("CLIENT JS ERROR: '.suggestions' container not found!");
         } else if (data.suggestions && Array.isArray(data.suggestions)) {
-            // console.log("CLIENT JS DEBUG: Valid suggestions array found. Updating DOM."); // Keep commented unless needed
-            try {
-                suggestionContainer.innerHTML = "";
-                data.suggestions.forEach((text, index) => {
-                    const btn = document.createElement("button");
-                    btn.className = "suggestion-btn";
-                    btn.textContent = text;
-                    btn.disabled = false;
-                    // *** REMOVED individual listener attachment ***
-                    // btn.addEventListener("click", () => sendMessage(text));
-                    suggestionContainer.appendChild(btn);
-                });
-            } catch (e) {
-                console.error("CLIENT JS ERROR: Error during suggestion DOM update:", e);
-            }
+            suggestionContainer.innerHTML = ""; // Clear previous
+            data.suggestions.forEach(text => {
+                const btn = document.createElement("button");
+                btn.className = "suggestion-btn"; 
+                btn.textContent = text;
+                btn.disabled = false;
+
+                const lowerText = text.toLowerCase();
+                if (lowerText.startsWith("select:")) { btn.classList.add("suggestion-btn-chart"); }
+                else if (lowerText.startsWith("yes, plot") || lowerText.startsWith("finished selecting")) { btn.classList.add("suggestion-btn-affirmative"); }
+                else if (lowerText.includes("show more") || lowerText.includes("pick columns") || lowerText.startsWith("change title") || lowerText.startsWith("change x-axis") || lowerText.startsWith("change y-axis")) { btn.classList.add("suggestion-btn-navigation"); }
+                else if (lowerText.includes("restart") || lowerText.includes("cancel") || lowerText.includes("back to chart list") || lowerText.includes("looks good")) { btn.classList.add("suggestion-btn-control"); }
+                else if (lowerText.includes("upload data") || lowerText.includes("help") || lowerText.includes("auto-mode") || lowerText.includes("statistical tests") || lowerText.includes("i'm not sure") || lowerText.includes("data summary")) { btn.classList.add("suggestion-btn-initial");}
+                
+                suggestionContainer.appendChild(btn);
+            });
         } else {
-            // console.log("CLIENT JS DEBUG: No valid 'suggestions' array. Clearing suggestions DOM."); // Keep commented unless needed
-            if (suggestionContainer) {
-                suggestionContainer.innerHTML = "";
-            }
+            if (suggestionContainer) suggestionContainer.innerHTML = "";
         }
 
         chatBox.scrollTop = chatBox.scrollHeight;
-
         inputBox.disabled = false;
         sendButton.disabled = false;
         fileUpload.disabled = false;
@@ -162,27 +165,18 @@
         inputBox.focus();
       }
 
-      // --- Event Listeners ---
-
       document.getElementById("send-button").addEventListener("click", () => sendMessage());
       document.getElementById("message-input").addEventListener("keypress", e => {
         if (e.key === "Enter") sendMessage();
       });
 
-      // Use event delegation for ALL suggestion button clicks (static and dynamic)
       document.querySelector(".suggestions").addEventListener("click", function(event) {
-          // Check if the clicked element is actually a button with the correct class
           if (event.target && event.target.classList.contains('suggestion-btn')) {
-              // Ensure button isn't disabled before sending message
               if (!event.target.disabled) {
-                   console.log(`Suggestion button clicked: ${event.target.textContent}`); // Optional log
-                   sendMessage(event.target.textContent);
+                  sendMessage(event.target.textContent);
               }
           }
       });
-
-      // *** REMOVED the old listener that targeted initial buttons only ***
-      // document.querySelectorAll(".suggestions .suggestion-btn").forEach(button => { ... });
 
       document.getElementById("file-upload").addEventListener("change", async function () {
         const file = this.files[0];
@@ -190,90 +184,82 @@
 
         const formData = new FormData();
         formData.append("file", file);
-
         const chatBox = document.getElementById("chat-box");
         const suggestionContainer = document.querySelector(".suggestions");
 
-        chatBox.innerHTML += `
-          <div class="chat-message user-message">
+        const userUploadMsgDiv = document.createElement('div');
+        userUploadMsgDiv.className = 'chat-message user-message';
+        userUploadMsgDiv.innerHTML = `
             <div class="avatar"><i class="fas fa-user"></i></div>
             <div class="message-content">
-              <div class="message-author">You</div>
-              <div class="message-bubble">
-                <p>I've uploaded a file: ${file.name}</p>
-              </div>
-            </div>
-          </div>
-        `;
+                <div class="message-author">You</div>
+                <div class="message-bubble"><p></p></div>
+            </div>`;
+        userUploadMsgDiv.querySelector('.message-bubble p').textContent = `I've uploaded a file: ${file.name}`;
+        chatBox.appendChild(userUploadMsgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
+        const loadingId = `loading-indicator-upload-${Date.now()}`;
         chatBox.innerHTML += `
-          <div class="chat-message bot-message loading" id="loading-indicator-upload">
+          <div class="chat-message bot-message loading" id="${loadingId}">
             <div class="avatar"><i class="fas fa-robot"></i></div>
             <div class="message-content">
               <div class="message-author">DataDecider</div>
               <div class="message-bubble"><p class="dots">...</p></div>
             </div>
-          </div>
-        `;
+          </div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        const response = await fetch("/upload_file", {
-          method: "POST",
-          body: formData
-        });
-
+        const response = await fetch("/upload_file", { method: "POST", body: formData });
         let result;
-        try {
-          result = await response.json();
-        } catch (err) {
-          console.error("CLIENT JS ERROR: Failed to parse JSON from /upload_file", err);
-          result = { response: "Oops! Something went wrong processing the server's response after file upload." };
-        }
+        try { result = await response.json(); } 
+        catch (err) { result = { response: "Oops! Error processing server response after upload." }; }
 
-        const loadingIndicatorUpload = document.getElementById("loading-indicator-upload");
-        if (loadingIndicatorUpload) {
-            loadingIndicatorUpload.remove();
-        }
+        const loadingIndicatorUpload = document.getElementById(loadingId);
+        if (loadingIndicatorUpload) loadingIndicatorUpload.remove();
 
         const uploadBotMessageElement = document.createElement('div');
         uploadBotMessageElement.className = 'chat-message bot-message';
+        
+        // Correctly render HTML from result.response (which is initial_bot_message)
+        let botUploadResponseHTML = result.response || (response.ok ? "File processed." : "Error uploading file.");
+        if (result.preview) {
+            botUploadResponseHTML += `<p style='margin-top:10px; font-size: 0.9em;'>Here's a preview of your data:</p>${result.preview}`;
+        }
+        
         uploadBotMessageElement.innerHTML = `
-            <div class="avatar"><i class="fas fa-robot"></i></div>
-            <div class="message-content">
-                <div class="message-author">DataDecider</div>
-                <div class="message-bubble">
-                    <p>${result.response || (response.ok ? "File processed." : "Error uploading file.")}</p>
-                    ${result.preview ? `<p style='margin-top:10px; font-size: 0.9em;'>Here's a preview of your data:</p>${result.preview}` : ""}
-                </div>
-            </div>
-        `;
+          <div class="avatar"><i class="fas fa-robot"></i></div>
+          <div class="message-content">
+            <div class="message-author">DataDecider</div>
+            <div class="message-bubble">${botUploadResponseHTML}</div> 
+          </div>`;
         chatBox.appendChild(uploadBotMessageElement);
 
         if (!suggestionContainer) {
-            console.error("CLIENT JS ERROR: '.suggestions' container not found in DOM after /upload_file!");
+            console.error("CLIENT JS ERROR: '.suggestions' container not found after /upload_file!");
         } else if (result.suggestions && Array.isArray(result.suggestions)) {
-            // console.log("CLIENT JS DEBUG (upload_file): Valid suggestions received. Updating DOM."); // Keep commented unless needed
             suggestionContainer.innerHTML = "";
             result.suggestions.forEach(text => {
-              const btn = document.createElement("button");
-              btn.className = "suggestion-btn";
-              btn.textContent = text;
-              btn.disabled = false;
-              // *** REMOVED individual listener attachment ***
-              // btn.addEventListener("click", () => sendMessage(text));
-              suggestionContainer.appendChild(btn);
+                const btn = document.createElement("button");
+                btn.className = "suggestion-btn";
+                btn.textContent = text;
+                btn.disabled = false;
+
+                const lowerText = text.toLowerCase();
+                if (lowerText.startsWith("select:")) { btn.classList.add("suggestion-btn-chart"); }
+                else if (lowerText.startsWith("yes, plot") || lowerText.startsWith("finished selecting")) { btn.classList.add("suggestion-btn-affirmative"); }
+                else if (lowerText.includes("show more") || lowerText.includes("pick columns") || lowerText.startsWith("change title") || lowerText.startsWith("change x-axis") || lowerText.startsWith("change y-axis")) { btn.classList.add("suggestion-btn-navigation"); }
+                else if (lowerText.includes("restart") || lowerText.includes("cancel") || lowerText.includes("back to chart list") || lowerText.includes("looks good")) { btn.classList.add("suggestion-btn-control"); }
+                else if (lowerText.includes("upload data") || lowerText.includes("help") || lowerText.includes("auto-mode") || lowerText.includes("statistical tests") || lowerText.includes("i'm not sure") || lowerText.includes("data summary")) { btn.classList.add("suggestion-btn-initial");}
+                
+                suggestionContainer.appendChild(btn);
             });
         } else {
-            // console.log("CLIENT JS DEBUG (upload_file): No valid suggestions from /upload_file. Clearing DOM."); // Keep commented unless needed
-            if (suggestionContainer) {
-                suggestionContainer.innerHTML = "";
-            }
+            if (suggestionContainer) suggestionContainer.innerHTML = "";
         }
-
         chatBox.scrollTop = chatBox.scrollHeight;
         this.value = "";
       });
-  </script>
+    </script>
 </body>
 </html>

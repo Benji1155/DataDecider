@@ -226,3 +226,75 @@ body {
   margin-bottom: 2px;
   margin-left: 5px;
 }
+/* Base style for all suggestion buttons (you might already have this or similar) */
+.suggestion-btn {
+  padding: 8px 15px; /* Adjust as needed */
+  margin: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+.suggestion-btn:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-1px);
+}
+.suggestion-btn:disabled {
+  background-color: #f0f0f0;
+  color: #aaa;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+/* Color for Chart Selection buttons (e.g., "Select: Histogram for 'Age'") */
+.suggestion-btn-chart {
+  background-color: #3B82F6; /* Blue */
+  color: white;
+  border-color: #2563EB;
+}
+.suggestion-btn-chart:hover {
+  background-color: #2563EB;
+}
+
+/* Color for Affirmative/Action buttons (e.g., "Yes, plot...", "Finished selecting") */
+.suggestion-btn-affirmative {
+  background-color: #10B981; /* Emerald Green */
+  color: white;
+  border-color: #059669;
+}
+.suggestion-btn-affirmative:hover {
+  background-color: #059669;
+}
+
+/* Color for Navigation/Exploration buttons (e.g., "Show more...", "Pick columns", "Change Title") */
+.suggestion-btn-navigation {
+  background-color: #8B5CF6; /* Violet */
+  color: white;
+  border-color: #7C3AED;
+}
+.suggestion-btn-navigation:hover {
+  background-color: #7C3AED;
+}
+
+/* Color for Control/Reset buttons (e.g., "Restart questions", "Cancel") */
+.suggestion-btn-control {
+  background-color: #64748B; /* Slate Gray */
+  color: white;
+  border-color: #475569;
+}
+.suggestion-btn-control:hover {
+  background-color: #475569;
+}
+
+/* Optional: A distinct style for initial action buttons if needed */
+.suggestion-btn-initial {
+  background-color: #06B6D4; /* Cyan */
+  color: white;
+  border-color: #0891B2;
+}
+.suggestion-btn-initial:hover {
+  background-color: #0891B2;
+}
