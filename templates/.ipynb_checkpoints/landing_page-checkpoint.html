@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataDecider</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6; /* Light, slightly off-white background */
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header {
+            padding: 40px 20px 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            height: 260px; /* Adjust as needed */
+            margin-bottom: 0px;
+        }
+
+        header h1 {
+            font-size: 2.8em;
+            font-weight: 700;
+            color: #2c3e50; /* Dark blue-gray */
+            margin: 0;
+             background: -webkit-linear-gradient(45deg, #007bff, #0056b3); /* Gradient for text */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p.subtitle {
+            font-size: 1.2em;
+            color: #555;
+            margin-top: 10px;
+            max-width: 600px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 60px 30px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 25px rgba(0, 86, 179, 0.2);
+        }
+
+        .hero h2 {
+            font-size: 2.2em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .hero p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-image: linear-gradient(to right, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px 35px;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 50px; /* Pill shape */
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            width: calc(33.333% - 40px); /* Adjust for gap */
+            min-width: 280px; /* Ensure cards don't get too small */
+            text-align: left;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .feature-card .icon {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #007bff; /* Primary color for icons */
+        }
+
+        .feature-card h3 {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .feature-card p {
+            font-size: 0.95em;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        footer {
+            margin-top: auto; /* Pushes footer to the bottom */
+            padding: 30px 20px;
+            font-size: 0.9em;
+            color: #777;
+            border-top: 1px solid #e0e5eb;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 992px) {
+            .feature-card {
+                width: calc(50% - 30px);
+            }
+        }
+        @media (max-width: 768px) {
+            header h1 { font-size: 2.2em; }
+            .hero h2 { font-size: 1.8em; }
+            .hero p { font-size: 1em; }
+            .cta-button { padding: 12px 30px; font-size: 1em; }
+            .feature-card {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='DataDeciderLogo.png') }}" alt="DataDecider Logo" class="logo">
+        <h1>DataDecider</h1>
+        <p class="subtitle">Your Smart Assistant for Data Analysis & Visualization</p>
+    </header>
+
+    <div class="container">
+        <section class="hero">
+            <h2>Unlock Insights from Your Data, Effortlessly.</h2>
+            <p>
+                DataDecider helps you navigate the complexities of data analysis. 
+                Whether you need to choose the right chart to tell your story, 
+                find the appropriate statistical test for your research, or simply learn more about these concepts, 
+                I'm here to guide you.
+            </p>
+            <a href="{{ url_for('chat_interface') }}" class="cta-button">Launch Chatbot &rarr;</a> 
+            <!-- Assuming your chat is at /chat or similar -->
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <div class="icon"><i class="fas fa-chart-pie"></i></div>
+                <h3>Intelligent Visualizations</h3>
+                <p>Get tailored chart suggestions based on your data types and analytical goals. Understand distributions, comparisons, relationships, and trends with ease.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon"><i class="fas fa-flask-vial"></i></div> <!-- Changed from fa-flask -->
+                <h3>Statistical Test Guidance</h3>
+                <p>Not sure which statistical test to use? Answer a few questions, and I'll recommend suitable tests, explaining their purpose and assumptions.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon"><i class="fas fa-book-open-reader"></i></div> <!-- Changed from fa-book -->
+                <h3>Learn & Explore</h3>
+                <p>Browse detailed explanations of various statistical tests and visualization techniques. Enhance your data literacy at your own pace.</p>
+            </div>
+        </section>
+         <section class="auto-mode-promo" style="margin-bottom: 40px; padding: 30px; background-color: #e9f5ff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.07);">
+            <h2>Try Auto-Mode! <i class="fas fa-magic-wand-sparkles"></i></h2>
+            <p>Upload your data and let DataDecider automatically generate a quick summary, key visualizations, and basic statistical insights to get you started instantly!</p>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; <span id="currentYear"></span> DataDecider. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

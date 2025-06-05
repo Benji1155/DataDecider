@@ -1588,6 +1588,33 @@ def handle_auto_mode_flow(uploaded_filepath, df_columns):
     return response_data, bot_reply
 
 
+@app.route("/")
+def landing():
+    # Clear session keys relevant to the chat interface if you want a fresh start
+    # when a user revisits the landing page after a chat.
+    keys_to_clear_for_landing = [
+        'visualization_questions_state', 'stat_test_questions_state', 'flow_type',
+        'uploaded_filepath', 'uploaded_filename', 'df_columns', 
+        # ... (add all session keys used by the chat interface that you want to clear)
+        'stat_learn_state', 'current_test_for_learning', 'viz_learn_state', 
+        'stat_learn_test_list_page', 'auto_mode_state'
+        # Add any other session keys here that are specific to your chat's state
+        # and should be reset when the user goes back to the landing page.
+    ]
+    for key in keys_to_clear_for_landing:
+        session.pop(key, None)
+    # Ensure you have a 'landing_page.html' in your 'templates' folder.
+    return render_template("landing_page.html")
+
+# Add this new route for your chat interface:
+@app.route("/chat") # Or whatever path you prefer for the chat
+def chat_interface():
+    # This route now serves your existing chat interface (index.html)
+    # Session clearing for a fresh chat usually happens in the /get_response 
+    # or initial load of index.html's JavaScript, or when initiating a new chat session.
+    # Ensure you have an 'index.html' in your 'templates' folder for the chat interface.
+    return render_template("index.html")
+
 # --- Flask Routes (Defined AFTER handler functions) ---
 @app.route("/")
 def home():

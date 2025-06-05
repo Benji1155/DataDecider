@@ -78,7 +78,9 @@
   </style>
 </head>
 <body>
-  <img src="{{ url_for('static', filename='DataDeciderLogo.png') }}" alt="DataDecider Logo" class="app-logo">
+  <a href="{{ url_for('landing') }}">
+    <img src="{{ url_for('static', filename='DataDeciderLogo.png') }}" alt="DataDecider Logo" class="app-logo">
+</a>
 
   <div class="theme-switch-wrapper">
     <label class="theme-switch" for="darkModeToggle">
