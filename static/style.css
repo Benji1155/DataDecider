@@ -1,90 +1,104 @@
 /* General reset */
 body {
   margin: 0;
-  padding: 0;
-  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
-  background-color: #f0f2f5;
+  padding: 0; 
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; /* Added Arial as a fallback */
+  background-color: #eef2f7; /* Slightly cooler light background */
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden; 
 }
 
-/* Chat container */
+/* Chat container - Make it take up more screen space */
 .chat-container {
-  width: 100%;
-  max-width: 1300px;
-  height: 700px;
-  background: #fff;
-  border-radius: 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  width: 95vw;   
+  max-width: 1600px; 
+  height: 90vh;  
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); /* Subtle gradient */
+  border-radius: 16px; /* Consistent rounding */
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1); /* Softer, more diffused shadow */
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 /* Chat messages (scrollable area) */
-.chat-messages {
+.chat-messages { 
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 25px; 
   scroll-behavior: smooth;
+  background-color: transparent; /* Allow container gradient to show through if desired, or set a very light one */
 }
 
 /* Chat bottom (suggestions + input) */
 .chat-bottom {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid #e0e5eb; /* Lighter border */
+  background-color: #ffffff; /* Keep bottom bar distinct but light */
 }
 
 /* Suggestions */
-.suggestions {
+.suggestions { 
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 16px 24px;
-  background-color: #f8f9fa;
-  border-top: 1px solid #e9ecef;
+  gap: 10px; 
+  padding: 15px 25px; 
+  /* background-color: #f8f9fa; Remove if chat-bottom provides bg */
 }
 
-.suggestion-btn {
-  background-color: #e9ecef;
+.suggestion-btn { 
   color: #333;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 16px;
+  border: 1px solid #d0d9e2; 
+  padding: 9px 15px; 
+  border-radius: 20px; /* More pill-like */
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
+  font-size: 0.875rem; 
+  font-weight: 500; /* Slightly bolder */
+  transition: all 0.2s ease-in-out;
+  background-image: linear-gradient(to top, #f2f6fa 0%, #ffffff 100%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .suggestion-btn:hover {
-  background-color: #dee2e6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.07);
+}
+.suggestion-btn:active {
+  transform: translateY(0px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
+
 /* Input section */
-.chat-input {
+.chat-input { 
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
-  background-color: #fff;
-  border-top: 1px solid #e9ecef;
+  gap: 12px; 
+  padding: 15px 25px; 
+  /* background-color: #fff; Removed as chat-bottom provides bg */
+  border-top: 1px solid #e0e5eb; 
 }
 
 /* File upload label */
 .file-upload-label {
-  background-color: #6c757d;
+  background-image: linear-gradient(to right, #6c757d 0%, #5a6268 100%);
   color: #fff;
-  padding: 9px 14px;
-  border-radius: 12px;
-  font-size: 14px;
+  padding: 10px 15px; 
+  border-radius: 20px; 
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .file-upload-label:hover {
-  background-color: #5a6268;
+  background-image: linear-gradient(to right, #5a6268 0%, #495057 100%);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .file-upload-label input[type="file"] {
@@ -92,209 +106,422 @@ body {
 }
 
 /* Input box */
-#message-input {
+#message-input { 
   flex: 1;
-  padding: 10px 16px;
-  border: 1px solid #ced4da;
-  border-radius: 20px;
-  font-size: 14px;
+  padding: 10px 18px;
+  border: 1px solid #ced4da; 
+  border-radius: 20px; 
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#message-input:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  outline: none;
 }
 
+
 #send-button {
-  background-color: #007BFF;
+  background-image: linear-gradient(to right, #007bff 0%, #0056b3 100%);
   color: #fff;
   border: none;
-  padding: 10px 18px;
-  border-radius: 12px;
+  padding: 10px 20px; 
+  border-radius: 20px; 
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 #send-button:hover {
-  background-color: #0069d9;
+  background-image: linear-gradient(to right, #0069d9 0%, #004085 100%);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 /* Message display */
-.chat-message {
+.chat-message { 
   display: flex;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  align-items: flex-start; 
+  margin-bottom: 20px; 
 }
 
 .chat-message.user-message {
-  flex-direction: row-reverse;
+  flex-direction: row-reverse; 
 }
 
 .avatar {
-  width: 44px;
-  height: 44px;
-  background-color: #dee2e6;
-  border-radius: 12px;
+  width: 40px; 
+  height: 40px;
+  border-radius: 50%; /* Circular avatars */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px; 
+  margin: 0 10px; 
+  flex-shrink: 0; 
+  background-color: #e9ecef; /* Default light gray */
   color: #495057;
-  margin: 0 12px;
-  flex-shrink: 0;
 }
 
 .user-message .avatar {
-  background-color: #cce5ff;
-  color: #004085;
+  background-image: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: #fff;
 }
 
 .bot-message .avatar {
-  background-color: #e2e3f3;
-  color: #383d8d;
+  background-image: linear-gradient(135deg, #6f42c1 0%, #4a2b9d 100%); 
+  color: #fff;
 }
 
 .message-bubble {
   max-width: 75%;
-  padding: 12px 18px;
-  border-radius: 18px;
-  font-size: 15px;
-  line-height: 1.5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  word-break: break-word;
+  padding: 12px 18px; 
+  border-radius: 18px; 
+  font-size: 0.95rem; 
+  line-height: 1.6; /* Improved readability */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+  word-break: break-word; 
 }
 
 .bot-message .message-bubble {
-  background-color: #f1f3f5;
-  color: #111;
-  border-top-left-radius: 4px;
+  background: linear-gradient(to top right, #f8f9fa, #e9ecef); 
+  color: #212529; /* Darker text for better contrast on light bubble */
+  border-top-left-radius: 6px; 
 }
 
 .user-message .message-bubble {
-  background-color: #007BFF;
+  background: linear-gradient(to top left, #007bff, #0056b3); 
   color: #fff;
-  border-top-right-radius: 4px;
+  border-top-right-radius: 6px; 
 }
 
-/* Scrollbar */
 .chat-messages::-webkit-scrollbar {
-  width: 8px;
+  width: 6px; /* Thinner scrollbar */
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
+  background-color: #bdc3c7; /* Lighter thumb */
+  border-radius: 3px;
+}
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent; /* Invisible track */
 }
 
-/* Typing dots animation */
-@keyframes blink {
-  0% { opacity: 0.2; }
-  20% { opacity: 1; }
-  100% { opacity: 0.2; }
+
+.typing-indicator span {
+    height: 8px;
+    width: 8px;
+    background-color: #adb5bd; 
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 1px; 
+    animation: typing-blink 1.4s infinite both; 
 }
 
-.dots::before {
-  content: 'Thinking';
+.typing-indicator span:nth-child(1) { 
+    animation-delay: 0s;
 }
-.dots::after {
-  content: ' .';
-  animation: blink 1.4s infinite;
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
 }
 
-/* Preview table */
+@keyframes typing-blink {
+    0% { opacity: 0.2; }
+    20% { opacity: 1; }
+    100% { opacity: 0.2; }
+}
+
 .preview-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
-  font-size: 0.85rem;
-  border: 1px solid #ccc;
+  margin-top: 15px;
+  font-size: 0.875rem;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
 }
 
 .preview-table th,
 .preview-table td {
-  border: 1px solid #ddd;
-  padding: 4px 8px;
+  border: 1px solid #e9ecef;
+  padding: 6px 10px;
   text-align: left;
 }
 
 .preview-table th {
-  background-color: #f4f4f4;
+  background-color: #f1f3f5;
+  font-weight: 600; /* Slightly bolder header */
 }
-.message-content {
+.message-content { 
   display: flex;
   flex-direction: column;
 }
+.message-content img { 
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Add shadow to plots */
+}
 
-.message-author {
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #888;
-  margin-bottom: 2px;
-  margin-left: 5px;
+.message-author { 
+  font-size: 0.8rem; /* Slightly larger author text */
+  font-weight: 500; /* Medium weight */
+  color: #6c757d; /* Softer gray */
+  margin-bottom: 4px; 
+  margin-left: 0; /* Align with bubble edge */
 }
-/* Base style for all suggestion buttons (you might already have this or similar) */
-.suggestion-btn {
-  padding: 8px 15px; /* Adjust as needed */
-  margin: 5px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  background-color: #f0f0f0;
-  cursor: pointer;
-  font-size: 0.9em;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-.suggestion-btn:hover {
-  background-color: #e0e0e0;
-  transform: translateY(-1px);
-}
-.suggestion-btn:disabled {
-  background-color: #f0f0f0;
-  color: #aaa;
-  cursor: not-allowed;
-  transform: none;
+.user-message .message-author {
+  text-align: right; /* Align user author to the right */
 }
 
 
-/* Color for Chart Selection buttons (e.g., "Select: Histogram for 'Age'") */
+/* Suggestion Button Category Colors with Gradients */
 .suggestion-btn-chart {
-  background-color: #3B82F6; /* Blue */
+  background-image: linear-gradient(to top, #3B82F6 0%, #60A5FA 100%); /* Blue gradient */
   color: white;
-  border-color: #2563EB;
+  border: none;
 }
 .suggestion-btn-chart:hover {
-  background-color: #2563EB;
+  background-image: linear-gradient(to top, #2563EB 0%, #3B82F6 100%);
 }
 
-/* Color for Affirmative/Action buttons (e.g., "Yes, plot...", "Finished selecting") */
 .suggestion-btn-affirmative {
-  background-color: #10B981; /* Emerald Green */
+  background-image: linear-gradient(to top, #10B981 0%, #34D399 100%); /* Emerald Green gradient */
   color: white;
-  border-color: #059669;
+  border: none;
 }
 .suggestion-btn-affirmative:hover {
-  background-color: #059669;
+  background-image: linear-gradient(to top, #059669 0%, #10B981 100%);
 }
 
-/* Color for Navigation/Exploration buttons (e.g., "Show more...", "Pick columns", "Change Title") */
 .suggestion-btn-navigation {
-  background-color: #8B5CF6; /* Violet */
+  background-image: linear-gradient(to top, #8B5CF6 0%, #A78BFA 100%); /* Violet gradient */
   color: white;
-  border-color: #7C3AED;
+  border: none;
 }
 .suggestion-btn-navigation:hover {
-  background-color: #7C3AED;
+  background-image: linear-gradient(to top, #7C3AED 0%, #8B5CF6 100%);
 }
 
-/* Color for Control/Reset buttons (e.g., "Restart questions", "Cancel") */
 .suggestion-btn-control {
-  background-color: #64748B; /* Slate Gray */
+  background-image: linear-gradient(to top, #64748B 0%, #94A3B8 100%); /* Slate Gray gradient */
   color: white;
-  border-color: #475569;
+  border: none;
 }
 .suggestion-btn-control:hover {
-  background-color: #475569;
+  background-image: linear-gradient(to top, #475569 0%, #64748B 100%);
 }
 
-/* Optional: A distinct style for initial action buttons if needed */
-.suggestion-btn-initial {
-  background-color: #06B6D4; /* Cyan */
+.suggestion-btn-initial { /* Fallback, also used by specific Flask-sent main options */
+  background-image: linear-gradient(to top, #06B6D4 0%, #22D3EE 100%); /* Cyan gradient */
   color: white;
-  border-color: #0891B2;
+  border: none;
 }
 .suggestion-btn-initial:hover {
-  background-color: #0891B2;
+  background-image: linear-gradient(to top, #0891B2 0%, #06B6D4 100%);
+}
+
+.suggestion-btn-auto {
+  background-image: linear-gradient(to top, #ffc107 0%, #fde047 100%); /* Amber/Yellow gradient */
+  color: #212529; 
+  border: none;
+}
+.suggestion-btn-auto:hover {
+  background-image: linear-gradient(to top, #e0a800 0%, #ffc107 100%);
+}
+
+.suggestion-btn-learn {
+  background-image: linear-gradient(to top, #6f42c1 0%, #8b5cf6 100%); /* Purple gradient */
+  color: white;
+  border: none;
+}
+.suggestion-btn-learn:hover {
+  background-image: linear-gradient(to top, #5a2b9d 0%, #6f42c1 100%);
+}
+
+.suggestion-btn-select {
+  background-image: linear-gradient(to top, #fd7e14 0%, #fb923c 100%); /* Orange gradient */
+  color: white;
+  border: none;
+}
+.suggestion-btn-select:hover {
+  background-image: linear-gradient(to top, #e36803 0%, #fd7e14 100%);
+}
+
+.suggestion-btn-action { 
+  background-image: linear-gradient(to top, #20c997 0%, #34d399 100%); /* Teal gradient */
+  color: white;
+  border: none;
+}
+.suggestion-btn-action:hover {
+  background-image: linear-gradient(to top, #1baa80 0%, #20c997 100%);
+}
+
+
+/* --- Dark Mode Styles --- */
+body.dark-mode {
+  background-color: #1a202c; /* Darker blue-gray background */
+  color: #e2e8f0; /* Lighter text for dark mode */
+}
+
+body.dark-mode .chat-container {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%); /* Dark gradient */
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); 
+  border: 1px solid #4a5568; /* Subtle border */
+}
+
+body.dark-mode .chat-messages {
+  background-color: #2d3748; /* Match container for a seamless look */
+}
+
+body.dark-mode .chat-message .message-bubble {
+  background-color: #4a5568; /* Medium dark bubbles */
+  color: #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .chat-message.user-message .message-bubble {
+  background: linear-gradient(to top left, #3b82f6, #2563eb); /* User blue gradient */
+  color: #ffffff;
+}
+
+body.dark-mode .bot-message .message-bubble {
+  background: linear-gradient(to top right, #4a5568, #2c3748); /* Darker bot bubble */
+  color: #e2e8f0;
+}
+
+body.dark-mode .chat-message .avatar {
+  background-color: #2c3748;
+  color: #a0aec0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+body.dark-mode .user-message .avatar {
+  background-image: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
+}
+
+body.dark-mode .bot-message .avatar {
+  background-image: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); 
+  color: #fff;
+}
+
+
+body.dark-mode .chat-bottom {
+  background-color: #1a202c; /* Darkest part for bottom bar */
+  border-top: 1px solid #2d3748;
+}
+
+body.dark-mode .suggestions {
+  background-color: #1a202c; 
+  border-top: none; 
+}
+
+body.dark-mode .suggestion-btn {
+  background-image: linear-gradient(to top, #4a5568 0%, #718096 100%);
+  color: #e2e8f0;
+  border: 1px solid #2d3748; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+body.dark-mode .suggestion-btn:hover {
+  background-image: linear-gradient(to top, #2d3748 0%, #4a5568 100%);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Dark mode specific button category overrides */
+body.dark-mode .suggestion-btn-initial {
+  background-image: linear-gradient(to top, #0891B2 0%, #06B6D4 100%);
+}
+body.dark-mode .suggestion-btn-auto {
+  background-image: linear-gradient(to top, #D97706 0%, #F59E0B 100%); color: #fff;
+}
+body.dark-mode .suggestion-btn-learn {
+  background-image: linear-gradient(to top, #7C3AED 0%, #8B5CF6 100%);
+}
+body.dark-mode .suggestion-btn-select {
+  background-image: linear-gradient(to top, #D97706 0%, #F59E0B 100%); color: #fff;
+}
+body.dark-mode .suggestion-btn-action {
+  background-image: linear-gradient(to top, #059669 0%, #10B981 100%);
+}
+body.dark-mode .suggestion-btn-chart {
+  background-image: linear-gradient(to top, #2563EB 0%, #3B82F6 100%);
+}
+body.dark-mode .suggestion-btn-affirmative {
+  background-image: linear-gradient(to top, #059669 0%, #10B981 100%);
+}
+body.dark-mode .suggestion-btn-control {
+  background-image: linear-gradient(to top, #475569 0%, #64748B 100%);
+}
+
+
+body.dark-mode .chat-input {
+  background-color: #1a202c; 
+  border-top: 1px solid #2d3748; 
+}
+
+body.dark-mode .chat-input input[type="text"] {
+  background-color: #2d3748;
+  color: #e2e8f0;
+  border: 1px solid #4a5568;
+}
+body.dark-mode #message-input:focus {
+  border-color: #4a5568;
+  box-shadow: 0 0 0 0.2rem rgba(74,85,104,.5);
+}
+
+body.dark-mode .chat-input input[type="text"]::placeholder {
+  color: #a0aec0;
+}
+
+body.dark-mode .chat-input #send-button,
+body.dark-mode .file-upload-label {
+  background-image: linear-gradient(to right, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+}
+
+body.dark-mode .chat-input #send-button:hover,
+body.dark-mode .file-upload-label:hover {
+  background-image: linear-gradient(to right, #2563eb 0%, #1d4ed8 100%);
+}
+
+body.dark-mode .preview-table {
+    background-color: #2d3748; 
+    color: #cbd5e0; 
+    border: 1px solid #4a5568; 
+}
+
+body.dark-mode .preview-table th,
+body.dark-mode .preview-table td {
+    border: 1px solid #4a5568; 
+}
+
+body.dark-mode .preview-table thead th {
+    background-color: #4a5568; 
+    color: #e2e8f0; 
+}
+
+body.dark-mode .preview-table tbody tr:nth-child(even) {
+    background-color: #2c3748; /* Slightly different from #2d3748 for subtle striping */
+}
+
+body.dark-mode .preview-table tbody tr:hover {
+    background-color: #4a5568; 
+}
+
+body.dark-mode .message-bubble img {
+    border: 1px solid #4a5568; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .typing-indicator span {
+  background-color: #718096; 
+}
+
+body.dark-mode .message-author { 
+  color: #a0aec0; 
 }

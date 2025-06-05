@@ -6,24 +6,102 @@
   <title>DataDecider</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    /* Basic styles for the dark mode toggle switch */
+    .theme-switch-wrapper {
+      display: flex;
+      align-items: center;
+      position: absolute;
+      top: 20px; 
+      right: 20px; 
+      z-index: 1000; 
+    }
+    .theme-switch-wrapper em {
+      margin-left: 10px;
+      font-size: 0.9rem; 
+      color: #555; /* Default label color for light mode */
+    }
+    .theme-switch {
+      display: inline-block;
+      height: 24px;
+      position: relative;
+      width: 48px;
+    }
+    .theme-switch input {
+      display:none;
+    }
+    .slider {
+      background-color: #ccc;
+      bottom: 0;
+      cursor: pointer;
+      left: 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      background-color: #fff;
+      bottom: 3px;
+      content: "";
+      height: 18px;
+      left: 3px;
+      position: absolute;
+      transition: .4s;
+      width: 18px;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #007BFF; /* Using your primary button blue */
+    }
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+    body.dark-mode .theme-switch-wrapper em {
+        color: #f0f0f0; 
+    }
+
+    /* Logo Styles */
+    .app-logo {
+      position: absolute;
+      top: 15px;
+      left: 10px;
+      z-index: 1000;
+      height: 140px; 
+      width: auto;   
+    }
+    body.dark-mode .app-logo {
+      /* filter: invert(1) hue-rotate(180deg); */ 
+    }
+
+  </style>
 </head>
 <body>
+  <img src="{{ url_for('static', filename='DataDeciderLogo.png') }}" alt="DataDecider Logo" class="app-logo">
+
+  <div class="theme-switch-wrapper">
+    <label class="theme-switch" for="darkModeToggle">
+      <input type="checkbox" id="darkModeToggle" />
+      <div class="slider round"></div>
+    </label>
+    <em>Dark Mode</em>
+  </div>
+
   <div class="chat-container">
     <div class="chat-messages" id="chat-box">
-      <div class="chat-message bot-message">
-        <div class="avatar"><i class="fas fa-robot"></i></div>
-        <div class="message-bubble">
-          <p>Hello! How can I assist you today? Please upload a CSV or Excel file to get started.</p>
-        </div>
-      </div>
     </div>
 
     <div class="chat-bottom">
       <div class="suggestions">
-        <button class="suggestion-btn suggestion-btn-initial">Auto-Mode</button>
-        <button class="suggestion-btn suggestion-btn-initial">Help Select Statistical Tests</button>
-        <button class="suggestion-btn suggestion-btn-initial">Help Select Visualizations</button>
-        <button class="suggestion-btn suggestion-btn-control">I'm Not Sure</button>
+        <!-- Static buttons are cleared by JS once Flask sends initial suggestions -->
+        <button class="suggestion-btn suggestion-btn-auto" onclick="sendSuggestion('Auto-Mode')">Auto-Mode</button>
+        <button class="suggestion-btn suggestion-btn-learn" onclick="sendSuggestion('Learn about statistical tests')">Learn about statistical tests</button>
+        <button class="suggestion-btn suggestion-btn-learn" onclick="sendSuggestion('Learn about visualization')">Learn about visualization</button>
+        <button class="suggestion-btn suggestion-btn-select" onclick="sendSuggestion('Help Select Statistical Tests')">Help Select Statistical Tests</button>
+        <button class="suggestion-btn suggestion-btn-select" onclick="sendSuggestion('Help Select Visualizations')">Help Select Visualizations</button>
+        <button class="suggestion-btn suggestion-btn-action" onclick="sendSuggestion('Upload Data')">Upload Data</button>
+        <button class="suggestion-btn suggestion-btn-action" onclick="sendSuggestion('I\'m Not Sure')">I'm Not Sure</button>
       </div>
 
       <div class="chat-input">
@@ -38,6 +116,95 @@
   </div>
 
   <script>
+      // Dark Mode Toggle Logic
+      const themeToggle = document.getElementById('darkModeToggle'); 
+      
+      function applyTheme(theme) {
+          if (theme === 'dark') {
+              document.body.classList.add('dark-mode');
+              if(themeToggle) themeToggle.checked = true;
+          } else {
+              document.body.classList.remove('dark-mode');
+              if(themeToggle) themeToggle.checked = false;
+          }
+      }
+
+      let currentThemeGlobal = localStorage.getItem('theme');
+      if (!currentThemeGlobal) {
+          currentThemeGlobal = 'light'; 
+      }
+      
+      if(themeToggle) {
+          themeToggle.addEventListener('change', function() {
+              if (this.checked) {
+                  localStorage.setItem('theme', 'dark');
+                  applyTheme('dark');
+              } else {
+                  localStorage.setItem('theme', 'light');
+                  applyTheme('light');
+              }
+          });
+      }
+      // End of Dark Mode Toggle Logic
+
+      function styleSuggestionButton(btn, text) {
+        const lowerText = text.toLowerCase();
+        // Specific Chart/Plot related actions
+        if (lowerText.startsWith("select:")) { 
+            btn.classList.add("suggestion-btn-chart"); 
+        } else if (lowerText.startsWith("yes, plot") || lowerText.startsWith("finished selecting")) { 
+            btn.classList.add("suggestion-btn-affirmative"); 
+        } 
+        // Navigation within a flow
+        else if (
+            lowerText.includes("show more") || 
+            lowerText.includes("pick columns") || 
+            lowerText.startsWith("change title") || 
+            lowerText.startsWith("change x-axis") || 
+            lowerText.startsWith("change y-axis") ||
+            lowerText.includes("next page") || 
+            lowerText.includes("previous page") 
+        ) { 
+            btn.classList.add("suggestion-btn-navigation"); 
+        } 
+        // Control actions like restart, cancel, back
+        else if (
+            lowerText.includes("restart") || 
+            lowerText.includes("cancel") || 
+            lowerText.includes("back to chart list") || 
+            lowerText.includes("back to main options") || 
+            lowerText.includes("looks good") ||
+            lowerText.includes("show list of tests again") 
+        ) { 
+            btn.classList.add("suggestion-btn-control"); 
+        } 
+        // Categorized Initial/Main Buttons
+        else if (lowerText === "auto-mode") {
+            btn.classList.add("suggestion-btn-auto");
+        }
+        else if (lowerText.startsWith("learn about")) { 
+            btn.classList.add("suggestion-btn-learn");
+        }
+        else if (lowerText.startsWith("help select")) { 
+            btn.classList.add("suggestion-btn-select");
+        }
+        else if ( 
+            lowerText === "upload data" || 
+            lowerText === "upload data to get analysis suggestions" ||
+            lowerText === "upload new data" || // Added this for consistency
+            lowerText === "help" || 
+            lowerText === "i'm not sure" ||
+            lowerText === "show data summary" 
+        ) { 
+            btn.classList.add("suggestion-btn-action"); 
+        }
+        else {
+            console.warn(`No specific style for suggestion: "${text}", applying fallback initial style.`);
+            btn.classList.add("suggestion-btn-initial"); 
+        }
+      }
+
+
       async function sendMessage(message = null) {
         const inputBox = document.getElementById("message-input");
         const chatBox = document.getElementById("chat-box");
@@ -45,9 +212,14 @@
         const suggestionContainer = document.querySelector(".suggestions");
         const fileUpload = document.getElementById("file-upload");
 
-        const userMessage = message || inputBox.value.trim();
-        if (!userMessage) return;
-        inputBox.value = "";
+        const userMessage = message === null ? inputBox.value.trim() : message;
+
+        if (!userMessage && message === null) { 
+            return; 
+        }
+        if (message === null) { 
+            inputBox.value = "";
+        }
 
         inputBox.disabled = true;
         sendButton.disabled = true;
@@ -56,114 +228,134 @@
             suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = true);
         }
 
-        // Add user message to chat (escape user input to prevent XSS)
-        const userMessageDiv = document.createElement('div');
-        userMessageDiv.className = 'chat-message user-message';
-        userMessageDiv.innerHTML = `
-            <div class="avatar"><i class="fas fa-user"></i></div>
-            <div class="message-content">
-                <div class="message-author">You</div>
-                <div class="message-bubble"><p></p></div>
-            </div>`;
-        userMessageDiv.querySelector('.message-bubble p').textContent = userMessage; // Safely set text
-        chatBox.appendChild(userMessageDiv);
+        if (userMessage !== '') { 
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'chat-message user-message';
+            userMessageDiv.innerHTML = `
+                <div class="avatar"><i class="fas fa-user"></i></div>
+                <div class="message-content">
+                    <div class="message-author">You</div>
+                    <div class="message-bubble"><p></p></div>
+                </div>`;
+            userMessageDiv.querySelector('.message-bubble p').textContent = userMessage; 
+            chatBox.appendChild(userMessageDiv);
+        }
         
-        // Add loading indicator
         const loadingId = `loading-indicator-${Date.now()}`;
-        chatBox.innerHTML += `
-          <div class="chat-message bot-message loading" id="${loadingId}">
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'chat-message bot-message loading';
+        loadingDiv.id = loadingId;
+        loadingDiv.innerHTML = `
             <div class="avatar"><i class="fas fa-robot"></i></div>
             <div class="message-content">
               <div class="message-author">DataDecider</div>
               <div class="message-bubble"><p class="dots">...</p></div>
-            </div>
-          </div>
-        `;
+            </div>`;
+        chatBox.appendChild(loadingDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        const res = await fetch("/get_response", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userMessage })
-        });
+        try {
+            const res = await fetch("/get_response", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: userMessage })
+            });
 
-        const data = await res.json();
-        const botReplyHTML = data.response; // Assume bot replies can be HTML
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            const data = await res.json();
+            const botReplyHTML = data.response; 
 
-        const loadingIndicator = document.getElementById(loadingId);
-        if (loadingIndicator) {
-            loadingIndicator.remove();
-        }
+            const loadingIndicator = document.getElementById(loadingId);
+            if (loadingIndicator) {
+                loadingIndicator.remove();
+            }
 
-        const botMessageElement = document.createElement('div');
-        botMessageElement.className = 'chat-message bot-message';
-        botMessageElement.innerHTML = `
-          <div class="avatar"><i class="fas fa-robot"></i></div>
-          <div class="message-content">
-            <div class="message-author">DataDecider</div>
-            <div class="message-bubble">
-              ${botReplyHTML} 
-            </div>
-          </div>
-        `;
-        chatBox.appendChild(botMessageElement);
+            const botMessageElement = document.createElement('div');
+            botMessageElement.className = 'chat-message bot-message';
+            botMessageElement.innerHTML = `
+              <div class="avatar"><i class="fas fa-robot"></i></div>
+              <div class="message-content">
+                <div class="message-author">DataDecider</div>
+                <div class="message-bubble">
+                  ${botReplyHTML} 
+                </div>
+              </div>
+            `;
+            chatBox.appendChild(botMessageElement);
 
-        if (data.plot_image) {
-            const messageBubble = botMessageElement.querySelector('.message-bubble');
-            if (messageBubble) {
-                const plotTitleP = document.createElement('p');
-                plotTitleP.style.marginTop = '10px';
-                plotTitleP.style.fontSize = '0.9em';
-                plotTitleP.innerHTML = "Here is the plot:";
-                messageBubble.appendChild(plotTitleP);
+            if (data.plot_image) {
+                const messageBubble = botMessageElement.querySelector('.message-bubble');
+                if (messageBubble) {
+                    const plotTitleP = document.createElement('p');
+                    plotTitleP.style.marginTop = '10px';
+                    plotTitleP.style.fontSize = '0.9em';
+                    plotTitleP.innerHTML = "Here is the plot:";
+                    messageBubble.appendChild(plotTitleP);
 
-                const imgElement = document.createElement('img');
-                imgElement.src = data.plot_image;
-                imgElement.alt = "Generated Plot";
-                imgElement.style.maxWidth = "100%";
-                imgElement.style.height = "auto";
-                imgElement.style.borderRadius = "8px";
-                imgElement.style.marginTop = "5px";
-                imgElement.style.border = "1px solid #eee";
-                imgElement.onerror = function() {
-                    this.alt='Plot failed to load'; this.style.display='none';
-                };
-                messageBubble.appendChild(imgElement);
+                    const imgElement = document.createElement('img');
+                    imgElement.src = data.plot_image;
+                    imgElement.alt = "Generated Plot";
+                    imgElement.style.maxWidth = "100%";
+                    imgElement.style.height = "auto";
+                    imgElement.style.borderRadius = "8px";
+                    imgElement.style.marginTop = "5px";
+                    imgElement.style.border = "1px solid #eee"; 
+                    imgElement.onerror = function() {
+                        this.alt='Plot failed to load'; this.style.display='none';
+                    };
+                    messageBubble.appendChild(imgElement);
+                }
+            }
+
+            if (!suggestionContainer) {
+                console.error("CLIENT JS ERROR: '.suggestions' container not found!");
+            } else if (data.suggestions && Array.isArray(data.suggestions)) {
+                suggestionContainer.innerHTML = ""; 
+                data.suggestions.forEach(text => {
+                    const btn = document.createElement("button");
+                    btn.className = "suggestion-btn"; 
+                    btn.textContent = text;
+                    btn.disabled = false;
+                    styleSuggestionButton(btn, text); // Use the centralized styling function
+                    suggestionContainer.appendChild(btn);
+                });
+            } else {
+                if (suggestionContainer) suggestionContainer.innerHTML = "";
+            }
+        } catch (error) {
+            console.error("Error fetching or processing response:", error);
+            const loadingIndicator = document.getElementById(loadingId);
+            if (loadingIndicator) loadingIndicator.remove();
+            
+            const errorElement = document.createElement('div');
+            errorElement.className = 'chat-message bot-message';
+            errorElement.innerHTML = `
+              <div class="avatar"><i class="fas fa-robot"></i></div>
+              <div class="message-content">
+                <div class="message-author">DataDecider</div>
+                <div class="message-bubble"><p>Sorry, something went wrong. Please try again.</p></div>
+              </div>`;
+            chatBox.appendChild(errorElement);
+        } finally {
+            chatBox.scrollTop = chatBox.scrollHeight;
+            inputBox.disabled = false;
+            sendButton.disabled = false;
+            fileUpload.disabled = false;
+            if (suggestionContainer) {
+                suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = false);
+            }
+            if (message === null) { 
+                inputBox.focus();
             }
         }
-
-        if (!suggestionContainer) {
-            console.error("CLIENT JS ERROR: '.suggestions' container not found!");
-        } else if (data.suggestions && Array.isArray(data.suggestions)) {
-            suggestionContainer.innerHTML = ""; // Clear previous
-            data.suggestions.forEach(text => {
-                const btn = document.createElement("button");
-                btn.className = "suggestion-btn"; 
-                btn.textContent = text;
-                btn.disabled = false;
-
-                const lowerText = text.toLowerCase();
-                if (lowerText.startsWith("select:")) { btn.classList.add("suggestion-btn-chart"); }
-                else if (lowerText.startsWith("yes, plot") || lowerText.startsWith("finished selecting")) { btn.classList.add("suggestion-btn-affirmative"); }
-                else if (lowerText.includes("show more") || lowerText.includes("pick columns") || lowerText.startsWith("change title") || lowerText.startsWith("change x-axis") || lowerText.startsWith("change y-axis")) { btn.classList.add("suggestion-btn-navigation"); }
-                else if (lowerText.includes("restart") || lowerText.includes("cancel") || lowerText.includes("back to chart list") || lowerText.includes("looks good")) { btn.classList.add("suggestion-btn-control"); }
-                else if (lowerText.includes("upload data") || lowerText.includes("help") || lowerText.includes("auto-mode") || lowerText.includes("statistical tests") || lowerText.includes("i'm not sure") || lowerText.includes("data summary")) { btn.classList.add("suggestion-btn-initial");}
-                
-                suggestionContainer.appendChild(btn);
-            });
-        } else {
-            if (suggestionContainer) suggestionContainer.innerHTML = "";
-        }
-
-        chatBox.scrollTop = chatBox.scrollHeight;
-        inputBox.disabled = false;
-        sendButton.disabled = false;
-        fileUpload.disabled = false;
-        if (suggestionContainer) {
-            suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = false);
-        }
-        inputBox.focus();
       }
+
+      document.addEventListener("DOMContentLoaded", () => {
+          applyTheme(currentThemeGlobal); // Apply theme before first message
+          sendMessage(''); 
+      });
 
       document.getElementById("send-button").addEventListener("click", () => sendMessage());
       document.getElementById("message-input").addEventListener("keypress", e => {
@@ -173,10 +365,17 @@
       document.querySelector(".suggestions").addEventListener("click", function(event) {
           if (event.target && event.target.classList.contains('suggestion-btn')) {
               if (!event.target.disabled) {
-                  sendMessage(event.target.textContent);
+                  if (!event.target.getAttribute('onclick')) { 
+                      sendMessage(event.target.textContent);
+                  }
               }
           }
       });
+
+      function sendSuggestion(text) {
+          sendMessage(text);
+      }
+
 
       document.getElementById("file-upload").addEventListener("change", async function () {
         const file = this.files[0];
@@ -186,6 +385,13 @@
         formData.append("file", file);
         const chatBox = document.getElementById("chat-box");
         const suggestionContainer = document.querySelector(".suggestions");
+
+        document.getElementById("message-input").disabled = true;
+        document.getElementById("send-button").disabled = true;
+        this.disabled = true; 
+        if (suggestionContainer) {
+            suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = true);
+        }
 
         const userUploadMsgDiv = document.createElement('div');
         userUploadMsgDiv.className = 'chat-message user-message';
@@ -200,66 +406,86 @@
         chatBox.scrollTop = chatBox.scrollHeight;
 
         const loadingId = `loading-indicator-upload-${Date.now()}`;
-        chatBox.innerHTML += `
-          <div class="chat-message bot-message loading" id="${loadingId}">
+        const loadingDivUpload = document.createElement('div');
+        loadingDivUpload.className = 'chat-message bot-message loading';
+        loadingDivUpload.id = loadingId;
+        loadingDivUpload.innerHTML = `
             <div class="avatar"><i class="fas fa-robot"></i></div>
             <div class="message-content">
               <div class="message-author">DataDecider</div>
               <div class="message-bubble"><p class="dots">...</p></div>
-            </div>
-          </div>`;
+            </div>`;
+        chatBox.appendChild(loadingDivUpload);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        const response = await fetch("/upload_file", { method: "POST", body: formData });
-        let result;
-        try { result = await response.json(); } 
-        catch (err) { result = { response: "Oops! Error processing server response after upload." }; }
+        try {
+            const response = await fetch("/upload_file", { method: "POST", body: formData });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            let result;
+            try { result = await response.json(); } 
+            catch (err) { result = { response: "Oops! Error processing server response after upload. Is the file format correct?" }; }
 
-        const loadingIndicatorUpload = document.getElementById(loadingId);
-        if (loadingIndicatorUpload) loadingIndicatorUpload.remove();
+            const loadingIndicatorUpload = document.getElementById(loadingId);
+            if (loadingIndicatorUpload) loadingIndicatorUpload.remove();
 
-        const uploadBotMessageElement = document.createElement('div');
-        uploadBotMessageElement.className = 'chat-message bot-message';
-        
-        // Correctly render HTML from result.response (which is initial_bot_message)
-        let botUploadResponseHTML = result.response || (response.ok ? "File processed." : "Error uploading file.");
-        if (result.preview) {
-            botUploadResponseHTML += `<p style='margin-top:10px; font-size: 0.9em;'>Here's a preview of your data:</p>${result.preview}`;
+            const uploadBotMessageElement = document.createElement('div');
+            uploadBotMessageElement.className = 'chat-message bot-message';
+            
+            let botUploadResponseHTML = result.response || (response.ok ? "File processed." : "Error uploading file.");
+            if (result.preview) {
+                botUploadResponseHTML += `<p style='margin-top:10px; font-size: 0.9em;'>Here's a preview of your data:</p>${result.preview}`;
+            }
+            
+            uploadBotMessageElement.innerHTML = `
+              <div class="avatar"><i class="fas fa-robot"></i></div>
+              <div class="message-content">
+                <div class="message-author">DataDecider</div>
+                <div class="message-bubble">${botUploadResponseHTML}</div> 
+              </div>`;
+            chatBox.appendChild(uploadBotMessageElement);
+
+            if (!suggestionContainer) {
+                console.error("CLIENT JS ERROR: '.suggestions' container not found after /upload_file!");
+            } else if (result.suggestions && Array.isArray(result.suggestions)) {
+                suggestionContainer.innerHTML = "";
+                result.suggestions.forEach(text => {
+                    const btn = document.createElement("button");
+                    btn.className = "suggestion-btn";
+                    btn.textContent = text;
+                    btn.disabled = false;
+                    styleSuggestionButton(btn, text); // Use the centralized styling function
+                    suggestionContainer.appendChild(btn);
+                });
+            } else {
+                if (suggestionContainer) suggestionContainer.innerHTML = "";
+            }
+        } catch (error) {
+            console.error("Error during file upload:", error);
+            const loadingIndicatorUpload = document.getElementById(loadingId);
+            if (loadingIndicatorUpload) loadingIndicatorUpload.remove();
+
+            const errorElement = document.createElement('div');
+            errorElement.className = 'chat-message bot-message';
+            errorElement.innerHTML = `
+              <div class="avatar"><i class="fas fa-robot"></i></div>
+              <div class="message-content">
+                <div class="message-author">DataDecider</div>
+                <div class="message-bubble"><p>Sorry, there was an error uploading or processing your file. Please ensure it's a valid CSV or Excel file and try again.</p></div>
+              </div>`;
+            chatBox.appendChild(errorElement);
+        } finally {
+            chatBox.scrollTop = chatBox.scrollHeight;
+            document.getElementById("message-input").disabled = false;
+            document.getElementById("send-button").disabled = false;
+            this.disabled = false; 
+            this.value = ""; 
+            if (suggestionContainer) {
+                suggestionContainer.querySelectorAll(".suggestion-btn").forEach(btn => btn.disabled = false);
+            }
         }
-        
-        uploadBotMessageElement.innerHTML = `
-          <div class="avatar"><i class="fas fa-robot"></i></div>
-          <div class="message-content">
-            <div class="message-author">DataDecider</div>
-            <div class="message-bubble">${botUploadResponseHTML}</div> 
-          </div>`;
-        chatBox.appendChild(uploadBotMessageElement);
-
-        if (!suggestionContainer) {
-            console.error("CLIENT JS ERROR: '.suggestions' container not found after /upload_file!");
-        } else if (result.suggestions && Array.isArray(result.suggestions)) {
-            suggestionContainer.innerHTML = "";
-            result.suggestions.forEach(text => {
-                const btn = document.createElement("button");
-                btn.className = "suggestion-btn";
-                btn.textContent = text;
-                btn.disabled = false;
-
-                const lowerText = text.toLowerCase();
-                if (lowerText.startsWith("select:")) { btn.classList.add("suggestion-btn-chart"); }
-                else if (lowerText.startsWith("yes, plot") || lowerText.startsWith("finished selecting")) { btn.classList.add("suggestion-btn-affirmative"); }
-                else if (lowerText.includes("show more") || lowerText.includes("pick columns") || lowerText.startsWith("change title") || lowerText.startsWith("change x-axis") || lowerText.startsWith("change y-axis")) { btn.classList.add("suggestion-btn-navigation"); }
-                else if (lowerText.includes("restart") || lowerText.includes("cancel") || lowerText.includes("back to chart list") || lowerText.includes("looks good")) { btn.classList.add("suggestion-btn-control"); }
-                else if (lowerText.includes("upload data") || lowerText.includes("help") || lowerText.includes("auto-mode") || lowerText.includes("statistical tests") || lowerText.includes("i'm not sure") || lowerText.includes("data summary")) { btn.classList.add("suggestion-btn-initial");}
-                
-                suggestionContainer.appendChild(btn);
-            });
-        } else {
-            if (suggestionContainer) suggestionContainer.innerHTML = "";
-        }
-        chatBox.scrollTop = chatBox.scrollHeight;
-        this.value = "";
       });
-    </script>
+  </script>
 </body>
 </html>
