@@ -2,18 +2,23 @@
   "intents": [
     {
       "tag": "greeting",
-      "patterns": [ "Hi", "Hello", "Hey", "Good morning", "Good evening" ],
-      "responses": [ "Hello! Please let me know how you would like help.", "Hi there, how can I help?", "Greetings! How can I help you?" ]
+      "patterns": [ "Hi", "Hello", "Hey", "Good morning", "Good evening", "Howdy", "What's up?" ],
+      "responses": [ "Hello! 🤖 How can I help you with your data today?", "Hi there! What can I help you analyze or visualize?", "Greetings! I'm ready to help with your statistics questions." ]
     },
     {
       "tag": "goodbye",
-      "patterns": [ "Bye", "See you later", "Goodbye" ],
-      "responses": [ "Goodbye!", "See you later!", "Talk to you soon!" ]
+      "patterns": [ "Bye", "See you later", "Goodbye", "I'm done", "That's all" ],
+      "responses": [ "Goodbye! 👋", "See you later!", "Talk to you soon!" ]
     },
     {
       "tag": "thanks",
-      "patterns": [ "Thanks", "Thank you", "That's helpful" ],
-      "responses": [ "You're welcome!", "Anytime!", "No problem!" ]
+      "patterns": [ "Thanks", "Thank you", "That's helpful", "Appreciate it", "Thanks a lot" ],
+      "responses": [ "You're welcome! 😊", "Anytime!", "No problem!", "Happy to help! 🎉" ]
+    },
+    {
+      "tag": "help",
+      "patterns": [ "Help", "I need help", "What can you do?", "Can you help me?" ],
+      "responses": [ "I can help you select statistical tests, create visualizations, or explain statistical concepts. What would you like to do?" ]
     },
     {
       "tag": "general_visualization",
@@ -22,18 +27,138 @@
     },
     {
       "tag": "stats_tests",
-      "patterns": [ "Test", "tests", "Help select statistical test"],
-      "responses": [ "Going down test tree"]
+      "patterns": [ "Test", "tests", "Help select statistical test", "What stat test should I use?", "Help me with stats", "Statistical analysis" ],
+      "responses": [ "Going down test tree" ]
     },
     {
       "tag": "upload_successful",
-      "patterns": [ "uploaded", "uploaded successfully" ],
+      "patterns": [ "uploaded", "uploaded successfully", "file is uploaded", "I just uploaded the data" ],
       "responses": [ "Thanks for that." ]
     },
     {
-      "tag": "specific_visualization",
-      "patterns": [ "Show me a chart of this data.", "Plot this data for me.", "Turn this into a chart.", "I want to see a trend line.", "Show this as a bar chart.", "Convert this into a pie chart.", "Make a scatter plot of this.", "Can you create a heatmap?", "Draw a flowchart for this.", "Illustrate this data with a chart." ],
-      "responses": [ "specific_visualization!", "specific_visualization!", "specific_visualization!" ]
+      "tag": "stats_mean_vs_median",
+      "patterns": [ "When to use mean vs median", "What's the difference between mean and median?", "mean or median", "Should I use the mean or the median?", "Explain mean and median", "Which is better for skewed data, mean or median?", "How do outliers affect the mean?" ],
+      "responses": [ "Great question! 🤔<br><br>• Use the <strong>Mean</strong> (or average) when your data is fairly symmetrical, like test scores. Example: If test scores are 70, 80, 85, 90, 95, the mean is 84.<br><br>• Use the <strong>Median</strong> (the middle value) when your data has outliers or is skewed, like salaries. Example: For salaries of $50k, $55k, $60k, and a CEO's $1M, the median ($57.5k) gives a much better sense of the typical salary than the mean ($291k)." ]
+    },
+    {
+      "tag": "stats_p_value",
+      "patterns": [ "What is a p-value?", "Explain p-value", "What does a small p-value mean?", "p-value", "How to interpret p-values", "What is statistical significance?", "p < 0.05", "Is my result significant?" ],
+      "responses": [ "Think of a <strong>p-value</strong> as an 'is it a coincidence?' meter. 🎲<br><br>A <strong>small p-value</strong> (usually < 0.05) means it's probably not a coincidence, and your result is 'statistically significant.'<br><br>Example: If a new fertilizer shows a p-value of 0.01 for crop growth, it's strong evidence the fertilizer works and the good growth wasn't just a fluke." ]
+    },
+    {
+      "tag": "stats_correlation_causation",
+      "patterns": [ "Correlation vs causation", "Does correlation imply causation?", "What's the difference between correlation and causation?", "Just because two things are correlated it doesn't mean one causes the other, right?", "what does it mean if two variables move together" ],
+      "responses": [ "This is a super important one! 💡<br><br>📈 <strong>Correlation</strong> is just when two things move together. Example: Ice cream sales and the number of people wearing sunglasses are correlated because both go up in the summer.<br><br>💥 <strong>Causation</strong> is when one thing *directly causes* the other. The sun causes us to wear sunglasses; it does not cause us to buy ice cream. They are only related by a third factor (the weather)." ]
+    },
+    {
+      "tag": "stats_normality",
+      "patterns": [ "What is a normal distribution?", "How to check for normality?", "What is a bell curve?", "Is my data normal?", "Normality assumption", "How can I tell if my data is normally distributed?", "What test for normality?", "how do I know if my data is bell shaped?" ],
+      "responses": [ "A <strong>Normal Distribution</strong> is the famous 'bell curve' 🔔 where most of your data points are clustered around the average. Think of people's heights – most are near the average, with fewer people being very short or very tall.<br><br>You can check for it visually with a Histogram or more formally with a statistical test like the Shapiro-Wilk test." ]
+    },
+    {
+      "tag": "stats_hypothesis_testing",
+      "patterns": [ "What is hypothesis testing?", "Explain null hypothesis", "What is an alternative hypothesis?", "Null vs alternative hypothesis", "H0 and H1" ],
+      "responses": [ "Think of it like a courtroom trial. 👨‍⚖️<br><br>• The <strong>Null Hypothesis (H0)</strong> is like assuming the defendant is 'not guilty' (meaning, there's no change or no effect).<br>• The <strong>Alternative Hypothesis (H1)</strong> is what the prosecutor tries to prove: the defendant is 'guilty' (meaning, there *is* an effect).<br><br>Your statistical test is the trial, where you see if there's enough evidence to reject the 'not guilty' assumption." ]
+    },
+    {
+      "tag": "stats_confidence_interval",
+      "patterns": [ "What is a confidence interval?", "Explain confidence intervals", "How to interpret a confidence interval?", "95% confidence interval meaning", "What does a CI tell me?" ],
+      "responses": [ "A <strong>Confidence Interval (CI)</strong> is a 'range of plausible values' for something you're measuring. 🎯<br><br>Example: If you measure the average height of 100 people to be 175cm with a 95% CI of [172cm, 178cm], you're 95% confident that the true average height of the *entire population* is somewhere between 172cm and 178cm." ]
+    },
+    {
+      "tag": "stats_t-test",
+      "patterns": [ "What is a t-test?", "When do I use a t-test?", "Explain t-tests", "What are the types of t-tests?", "How to compare two means?", "Independent samples t-test vs paired t-test" ],
+      "responses": [ "A <strong>t-test</strong> is your go-to tool for comparing the averages of two groups. 🧑‍🔬<br><br>Example: You could use a t-test to see if there's a significant difference in test scores between students who studied with music and those who studied in silence. It tells you if the difference you see is real or just due to random chance." ]
+    },
+    {
+      "tag": "stats_anova",
+      "patterns": [ "What is ANOVA?", "When should I use ANOVA?", "Explain ANOVA", "Analysis of Variance", "How do I compare more than two groups?", "I have 3 samples to compare", "Test for difference between multiple groups", "what test is best for comparing three different groups" ],
+      "responses": [ "<strong>ANOVA</strong> is like a t-test, but for 3 or more groups. 🔬<br><br>Example: Imagine you're testing three different fertilizers to see which grows the tallest plants. ANOVA will tell you *if* there's a difference among them, but not which one is the best. For that, you'd use a follow-up (post-hoc) test." ]
+    },
+    {
+      "tag": "stats_chi_square",
+      "patterns": [ "What is a Chi-Square test?", "When to use Chi-Square?", "Explain the Chi-Square test", "chi squared", "How to test for association between categorical variables?", "Test for independence", "i need to see if there is an association between gender and product choice" ],
+      "responses": [ "A <strong>Chi-Square (χ²) test</strong> is for when you're working with categories, not numbers. 📊<br><br>Example: You could use it to see if there's a relationship between someone's favorite ice cream flavor (Chocolate, Vanilla, Strawberry) and their favorite movie genre (Comedy, Action, Romance). It checks if the patterns you see are significant or just random." ]
+    },
+    {
+      "tag": "stats_regression",
+      "patterns": [ "What is regression?", "Explain linear regression", "When to use regression analysis?", "How to predict an outcome from a variable?", "What are dependent and independent variables?" ],
+      "responses": [ "<strong>Regression</strong> is like a statistical crystal ball. 🔮 It helps you predict a value based on other variables.<br><br>Example: You could use linear regression to predict a student's final exam score based on how many hours they studied. It finds the best-fit line to make those predictions." ]
+    },
+    {
+      "tag": "stats_data_types",
+      "patterns": [ "What are data types?", "Difference between categorical and numerical data", "Nominal vs ordinal data", "Explain data levels of measurement", "Continuous vs discrete data" ],
+      "responses": [ "Knowing your data type is key! 🔑<br>• <strong>Numerical</strong>: It's a number. (e.g., your height, the temperature).<br>• <strong>Categorical</strong>: It's a group or label.<br>  - <strong>Nominal</strong>: Categories with no order (e.g., 'Red', 'Blue', 'Green').<br>  - <strong>Ordinal</strong>: Categories with a logical order (e.g., 'Small', 'Medium', 'Large')." ]
+    },
+    {
+      "tag": "stats_error_types",
+      "patterns": [ "What is a Type I error?", "What is a Type II error?", "Type 1 vs Type 2 error", "Explain statistical errors", "alpha and beta error", "false positive vs false negative" ],
+      "responses": [ "These are the two ways a statistical test can be wrong:<br>• <strong>Type I Error (False Positive)</strong>: Your fire alarm goes off, but there's no fire. 🔥 The test says there's an effect, but there really isn't.<br>• <strong>Type II Error (False Negative)</strong>: There's a fire, but your alarm doesn't go off. 🤫 The test says there's no effect, but there really is one." ]
+    },
+    {
+      "tag": "stats_sample_size",
+      "patterns": [ "Why is sample size important?", "How does sample size affect my results?", "What is a good sample size?", "How big should my sample be?", "What is statistical power?" ],
+      "responses": [ "<strong>Sample size</strong> is about how much evidence you have. 👥<br><br>Having a larger sample size is like having more witnesses in a trial. It makes you more confident in your results and gives you more power to detect a real effect if one exists. A small sample can easily lead to wrong conclusions just by chance!" ]
+    },
+    {
+      "tag": "stats_outliers",
+      "patterns": [ "What are outliers?", "How to deal with outliers?", "How do I find outliers?", "Should I remove outliers?", "What to do with extreme values?", "my data has some really extreme values" ],
+      "responses": [ "An <strong>outlier</strong> is a data point that's way different from the others. 👽<br><br>Example: In a list of people's ages like {25, 28, 30, 32, 95}, the age 95 is an outlier. It can seriously mess up your average (mean). Always investigate them! Sometimes they are mistakes, but other times they are the most interesting data point you have." ]
+    },
+    {
+      "tag": "stats_std_dev_variance",
+      "patterns": [ "Standard deviation vs variance", "What's the difference between variance and standard deviation?", "Explain std dev", "What is variance?", "How do I measure data spread?", "how do I measure the spread of my data points?" ],
+      "responses": [ "Both measure how spread out your data is, but <strong>Standard Deviation</strong> is usually easier to understand. 📏<br><br>Think of it as the 'typical' distance a data point is from the average. A small standard deviation means your data is tightly clustered, while a large one means it's very spread out." ]
+    },
+    {
+      "tag": "stats_parametric_nonparametric",
+      "patterns": [ "Parametric vs non-parametric tests", "What's a non-parametric test?", "When to use a parametric test?", "Difference between parametric and non-parametric", "What test to use for non-normal data?" ],
+      "responses": [ "It's all about assumptions! ⚙️<br>• <strong>Parametric tests</strong> (like a t-test) are like high-performance cars. They're powerful, but they assume your data follows certain rules (like being normally distributed).<br>• <strong>Non-parametric tests</strong> are like off-road trucks. They're more flexible and don't need the data to be perfectly shaped. They're great for skewed data or small sample sizes." ]
+    },
+    {
+      "tag": "stats_power_analysis",
+      "patterns": [ "What is statistical power?", "Explain power analysis", "How to calculate power?", "How to avoid a type II error?" ],
+      "responses": [ "<strong>Statistical Power</strong> is like having a good magnifying glass. 🔎 It's the probability that your test will be able to find a real effect if it's there. A 'power analysis' is often done before an experiment to figure out the right sample size to use, so you don't miss something important!" ]
+    },
+    {
+      "tag": "stats_effect_size",
+      "patterns": [ "What is effect size?", "Explain effect size", "How do I interpret effect size?", "Cohen's d", "practical significance", "statistical vs practical significance" ],
+      "responses": [ "<strong>Effect size</strong> tells you 'how much' something happened. 💪<br><br>A p-value might say a new teaching method is 'significant', but effect size tells you if it improved scores by a tiny bit or a whole lot. It's the difference between a result being technically true and being practically useful in the real world." ]
+    },
+    {
+      "tag": "stats_skewness_kurtosis",
+      "patterns": [ "What is skewness?", "What is kurtosis?", "Explain skew and kurtosis", "How to tell if data is skewed?", "What are tailed distributions?" ],
+      "responses": [ "They're just fancy words for the shape of your data! 📉<br>• <strong>Skewness</strong> describes if your data is lopsided. A 'right skew' has a long tail to the right, like for people's incomes.<br>• <strong>Kurtosis</strong> describes how 'pointy' or 'flat' your distribution is, which can be related to outliers." ]
+    },
+    {
+      "tag": "stats_bivariate_multivariate",
+      "patterns": [ "Bivariate vs multivariate analysis", "Difference between bivariate and multivariate", "univariate analysis", "What is univariate analysis?" ],
+      "responses": [ "It's just about how many variables you're looking at at once: 🧐<br>• <strong>Univariate</strong>: Analyzing one variable (e.g., just looking at 'height').<br>• <strong>Bivariate</strong>: Analyzing the relationship between two variables (e.g., 'height' vs 'weight').<br>• <strong>Multivariate</strong>: Analyzing three or more variables all at once (e.g., how 'height', 'weight', and 'age' predict 'health')." ]
+    },
+    {
+      "tag": "stats_time_series_stationarity",
+      "patterns": [ "What is stationarity?", "Explain stationarity in time series", "How to check for stationarity?", "Dickey-Fuller test" ],
+      "responses": [ "<strong>Stationarity</strong> means a time series' properties (like its average) don't change over time. ⏳ Think of it like a calm, flat river. A non-stationary series might be like a river flowing downhill (it has a trend). Many time series models need the data to be 'calm' (stationary) before they can work properly." ]
+    },
+    {
+      "tag": "stats_time_series_seasonality",
+      "patterns": [ "What is seasonality?", "How to handle seasonality in data?", "How to find seasonal patterns?", "Decomposition of time series" ],
+      "responses": [ "<strong>Seasonality</strong> refers to predictable patterns that repeat over a set period. ☀️❄️<br><br>Example: Retail stores sell more sunscreen in the summer and more coats in the winter, every year. That's seasonality! It's important to account for it when making forecasts." ]
+    },
+    {
+      "tag": "plot_explanation_boxplot",
+      "patterns": [ "What is a box plot?", "How to read a box plot?", "Explain box plots", "box and whisker plot", "How to interpret a boxplot?" ],
+      "responses": [ "A <strong>box plot</strong> is a super useful way to see a data summary at a glance! 📊<br><br>The <strong>box</strong> shows you where the middle 50% of your data is. The <strong>line inside</strong> is the median (the middle value). The 'whiskers' show the rest of the data, and any dots outside are outliers. They're great for comparing groups side-by-side." ]
+    },
+    {
+      "tag": "plot_explanation_histogram",
+      "patterns": [ "What is a histogram?", "Histogram vs bar chart", "How do I interpret a histogram?", "What are bins in a histogram?", "what's the difference between a histogram and a bar chart" ],
+      "responses": [ "A <strong>histogram</strong> shows the shape of your numerical data. 📶<br><br>It groups numbers into ranges (called 'bins') and the height of each bar shows how many data points fall into that range. It's different from a bar chart, which is used to compare separate categories (like 'apples' vs 'oranges')." ]
+    },
+    {
+      "tag": "stats_assumption_violation",
+      "patterns": [ "What if my data is not normal?", "What to do if assumptions are violated?", "What if I can't use a t-test?", "My data failed the normality test", "What if my variances are not equal?", "what to do if my data is not normally distributed" ],
+      "responses": [ "Don't worry, it happens all the time! You have options: ✅<br>1. <strong>Use a non-parametric test</strong>. This is often the easiest and best choice. For example, if your data isn't normal for a t-test, you can use a Mann-Whitney U test instead.<br>2. <strong>Transform the data</strong>. Sometimes, taking the logarithm of your data can fix the problem.<br>3. <strong>Proceed with caution</strong>. If your sample size is large, some tests work okay even if assumptions are slightly bent, but you should mention it!" ]
     }
   ]
 }

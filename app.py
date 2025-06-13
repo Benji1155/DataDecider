@@ -1075,9 +1075,7 @@ def handle_visualization_flow(user_input, user_input_lower, uploaded_filepath, d
     return response_data, bot_reply
 
 def handle_statistical_test_flow(user_input, user_input_lower, uploaded_filepath, df_columns):
-    # ... (Full code for this function from the previous complete version)
-    # Make sure any "Back to main options" or similar logic uses the
-    # correct UNIFIED_INITIAL_SUGGESTIONS or SUGGESTIONS_WITH_DATA_LOADED
+    # This function now correctly handles the "back to list" and "restart questions" commands.
     response_data = {}
     bot_reply = ""
     current_stat_state = session.get('stat_test_questions_state')
@@ -1102,17 +1100,17 @@ def handle_statistical_test_flow(user_input, user_input_lower, uploaded_filepath
             session['stat_test_questions_state'] = 'asking_relationship_vars_count'
             response_data = {"suggestions": ["Two variables", "Multiple variables (e.g., one outcome with several predictors)"]}
         elif "time series" in question_type_lower or "trends or patterns over time" in question_type_lower:
-            session['stat_question_type'] = "Time series trend analysis" 
+            session['stat_question_type'] = "Time series trend analysis"
             bot_reply = "Okay, <strong>time series analysis</strong> (trends, patterns over time). <br><br><strong>2. What type of data is your main time series variable?</strong> (Usually, this is a continuous measurement like sales, temperature, stock price, etc.)"
             session['stat_test_questions_state'] = 'asking_stat_data_type'
             response_data = {"suggestions": ["Continuous (numbers that can take any value)", "Counts/Events over time (e.g., number of occurrences per day)"]}
         elif "comparing two different time series" in question_type_lower:
-            session['stat_question_type'] = "Comparing time series" 
+            session['stat_question_type'] = "Comparing time series"
             bot_reply = "Okay, <strong>comparing two different time series</strong>. <br><br><strong>2. What type of data are these time series variables?</strong>"
             session['stat_test_questions_state'] = 'asking_stat_data_type'
             response_data = {"suggestions": ["Both Continuous", "Both Counts/Events"]}
         elif "describing a single variable" in question_type_lower or "describing a single variable or group" in question_type_lower:
-            session['stat_question_type'] = "Describing a single variable/group" 
+            session['stat_question_type'] = "Describing a single variable/group"
             bot_reply = "Okay, you want to <strong>describe a single variable or group</strong>. <br><br><strong>2. What is the data type of this variable?</strong>"
             session['stat_test_questions_state'] = 'asking_stat_data_type'
             response_data = {"suggestions": ["Continuous (numbers like height, temperature, age)", "Categorical - Nominal (groups with no order, e.g., colors, gender)", "Categorical - Ordinal (ordered groups, e.g., ratings like low/medium/high)"]}
@@ -1132,16 +1130,16 @@ def handle_statistical_test_flow(user_input, user_input_lower, uploaded_filepath
         bot_reply = "Understood. <br><br><strong>3. What are the data types of the variables involved in this relationship?</strong>"
         session['stat_test_questions_state'] = 'asking_stat_data_type'
         response_data = {"suggestions": ["Both Continuous (e.g., age and income)", "Both Categorical (Nominal - no order, e.g., gender and preferred brand)", "Both Categorical (Ordinal - ordered categories, e.g., education level and job satisfaction)", "One Continuous, One Categorical (e.g., income and education level)", "Mix of multiple types (for more complex models like regression)"]}
-        
+
     elif current_stat_state == 'asking_stat_data_type':
         session['stat_data_type'] = user_input
         data_type_lower = user_input.lower()
-        if "continuous" in data_type_lower: 
+        if "continuous" in data_type_lower:
             bot_reply = "Okay, <strong>continuous data</strong> (numbers that can take any value within a range). <br><br><strong>4. For these continuous variables, do you know if your data follows a bell curve (is normally distributed)?</strong> (Or, if comparing groups, are the *differences* or *residuals* normally distributed?). This is a key assumption for some tests."
             session['stat_test_questions_state'] = 'asking_stat_data_normality'
             response_data = {"suggestions": ["Yes, it's normally distributed", "No, it's not normally distributed", "I'm not sure / I haven't checked"]}
-        else: 
-            session['stat_data_normality'] = "not applicable" 
+        else:
+            session['stat_data_normality'] = "not applicable"
             user_answers_stats_complete = {
                 'stat_question_type': session.get('stat_question_type', ''),
                 'stat_groups_comparing': session.get('stat_groups_comparing', ''),
@@ -1149,19 +1147,20 @@ def handle_statistical_test_flow(user_input, user_input_lower, uploaded_filepath
                 'stat_data_type': session.get('stat_data_type', ''),
                 'stat_data_normality': session.get('stat_data_normality', '')
             }
-            df_sample = None 
+            df_sample = None
             if uploaded_filepath:
                 try: df_sample = pd.read_csv(uploaded_filepath, nrows=PRE_VALIDATION_SAMPLE_SIZE) if uploaded_filepath.endswith(".csv") else pd.read_excel(uploaded_filepath, nrows=PRE_VALIDATION_SAMPLE_SIZE)
                 except Exception as e: print(f"Error reading sample for stat test suggestion: {e}")
 
             recommended_tests = suggest_statistical_tests(user_answers_stats_complete, df_sample)
+            session['last_recommended_tests'] = recommended_tests
             bot_reply = "Based on your answers, here are some statistical tests you might consider:<br>"
             test_suggestions_for_buttons = []
-            for test in recommended_tests: 
+            for test in recommended_tests:
                 bot_reply += f"<br><strong>{test['name']}</strong>: <em>{test['reason']}</em>"
-                test_suggestions_for_buttons.append(f"Tell me more about: {test['name']}") 
-            
-            session['stat_test_questions_state'] = 'awaiting_test_detail_selection' 
+                test_suggestions_for_buttons.append(f"Tell me more about: {test['name']}")
+
+            session['stat_test_questions_state'] = 'awaiting_test_detail_selection'
             response_data = {"suggestions": test_suggestions_for_buttons + ["Restart statistical test questions", "Help Select Visualizations"]}
 
     elif current_stat_state == 'asking_stat_data_normality':
@@ -1171,30 +1170,31 @@ def handle_statistical_test_flow(user_input, user_input_lower, uploaded_filepath
             'stat_groups_comparing': session.get('stat_groups_comparing', ''),
             'stat_relationship_vars_count': session.get('stat_relationship_vars_count', ''),
             'stat_data_type': session.get('stat_data_type', ''),
-            'stat_data_normality': user_input 
+            'stat_data_normality': user_input
         }
         df_sample = None
         if uploaded_filepath:
             try: df_sample = pd.read_csv(uploaded_filepath, nrows=PRE_VALIDATION_SAMPLE_SIZE) if uploaded_filepath.endswith(".csv") else pd.read_excel(uploaded_filepath, nrows=PRE_VALIDATION_SAMPLE_SIZE)
             except Exception as e: print(f"Error reading sample for stat test suggestion: {e}")
-            
+
         recommended_tests = suggest_statistical_tests(user_answers_stats_complete, df_sample)
+        session['last_recommended_tests'] = recommended_tests
         bot_reply = "Okay, based on all your answers, here are some statistical tests you might consider:<br>"
         test_suggestions_for_buttons = []
         if recommended_tests:
-            for test in recommended_tests: 
+            for test in recommended_tests:
                 bot_reply += f"<br><strong>{test['name']}</strong>: <em>{test['reason']}</em>"
-                test_suggestions_for_buttons.append(f"Tell me more about: {test['name']}") 
+                test_suggestions_for_buttons.append(f"Tell me more about: {test['name']}")
         else:
             bot_reply += "<br>I couldn't pinpoint a specific test. This might be a complex scenario."
-        
-        session['stat_test_questions_state'] = 'awaiting_test_detail_selection' 
+
+        session['stat_test_questions_state'] = 'awaiting_test_detail_selection'
         response_data = {"suggestions": test_suggestions_for_buttons + ["Restart statistical test questions", "Help Select Visualizations"]}
-    
-    elif current_stat_state == 'awaiting_test_detail_selection': 
+
+    elif current_stat_state == 'awaiting_test_detail_selection':
         if user_input.startswith("Tell me more about: "):
             test_name_query = user_input.replace("Tell me more about: ", "").strip()
-            test_details = STATISTICAL_TEST_DETAILS.get(test_name_query) 
+            test_details = STATISTICAL_TEST_DETAILS.get(test_name_query)
             if test_details:
                 bot_reply = f"<h3>{test_details['title']}</h3>"
                 bot_reply += f"<p>{test_details['description']}</p><br>"
@@ -1209,68 +1209,75 @@ def handle_statistical_test_flow(user_input, user_input_lower, uploaded_filepath
                     bot_reply += f"<strong>Simplified Formula:</strong><p>{test_details['formula_simple']}</p><br>"
                 bot_reply += f"<strong>Example:</strong><p>{test_details['example']}</p><br>"
                 bot_reply += f"<strong>Interpreting Results (Simplified):</strong><p>{test_details['interpretation']}</p>"
-                
+
                 response_data = {"suggestions": ["Suggest other tests (back to list)", "Restart statistical test questions", "Help Select Visualizations"]}
-                session['stat_test_questions_state'] = 'stat_info_gathered' 
+                session['stat_test_questions_state'] = 'stat_info_gathered'
             else:
                 bot_reply = f"Sorry, I don't have detailed information for '{test_name_query}' right now. Please choose from the list or try restarting. (Ensure this test name exactly matches a key in my knowledge base)."
-                response_data = {"suggestions": session.get('last_suggestions', [])[:-2] + ["Restart statistical test questions", "Help Select Visualizations"]} 
-        elif "suggest other tests" in user_input_lower: 
-            user_answers_stats_complete = { 
-                'stat_question_type': session.get('stat_question_type', ''),
-                'stat_groups_comparing': session.get('stat_groups_comparing', ''),
-                'stat_relationship_vars_count': session.get('stat_relationship_vars_count', ''),
-                'stat_data_type': session.get('stat_data_type', ''),
-                'stat_data_normality': session.get('stat_data_normality', '')
-            }
-            df_sample = None
-            if uploaded_filepath:
-                try: df_sample = pd.read_csv(uploaded_filepath, nrows=PRE_VALIDATION_SAMPLE_SIZE) if uploaded_filepath.endswith(".csv") else pd.read_excel(uploaded_filepath, nrows=PRE_VALIDATION_SAMPLE_SIZE)
-                except Exception as e: print(f"Error reading sample for stat test suggestion: {e}")
-            recommended_tests = suggest_statistical_tests(user_answers_stats_complete, df_sample)
-            bot_reply = "Okay, here are the statistical test suggestions again:<br>"
-            test_suggestions_for_buttons = []
-            if recommended_tests:
-                for test in recommended_tests: 
-                    bot_reply += f"<br><strong>{test['name']}</strong>: <em>{test['reason']}</em>"
-                    test_suggestions_for_buttons.append(f"Tell me more about: {test['name']}")
-            else: bot_reply += "<br>I couldn't pinpoint a specific test."
-            session['stat_test_questions_state'] = 'awaiting_test_detail_selection' 
-            response_data = {"suggestions": test_suggestions_for_buttons + ["Restart statistical test questions", "Help Select Visualizations"]}
+                response_data = {"suggestions": session.get('last_suggestions', [])[:-2] + ["Restart statistical test questions", "Help Select Visualizations"]}
+        
+        # === FIX IS HERE ===
+        elif user_input_lower == "restart statistical test questions":
+            # Clear previous answers for this specific flow
+            for key in ['stat_question_type', 'stat_groups_comparing', 'stat_relationship_vars_count', 'stat_data_type', 'stat_data_normality', 'last_recommended_tests']:
+                session.pop(key, None)
+            
+            # Reset the state to the beginning of the flow
+            session['stat_test_questions_state'] = 'asking_stat_question_type'
+            session['flow_type'] = 'statistical_tests' # Ensure we stay in the correct flow
+            
+            # Provide the initial prompt and suggestions
+            bot_reply = "Okay, let's figure out which statistical test might be suitable for your data!<br><br><strong>1. Broadly, what kind of statistical question are you trying to answer?</strong>"
+            response_data = {"suggestions": ["Comparing averages or counts between Groups?", "Looking for Relationships or Connections?", "Analyzing Trends or Patterns Over Time?", "Comparing Two Different Time Series?", "Just Describing a Single Variable or Group?"]}
 
         else:
             bot_reply = "Please select a test from the list to learn more, or choose another option."
             last_suggs = session.get('last_suggestions', [])
             current_suggestions = [s for s in last_suggs if s.startswith("Tell me more about:")]
-            if not current_suggestions and session.get('stat_question_type'): 
-                user_answers_stats_complete = {
-                    'stat_question_type': session.get('stat_question_type', ''),
-                    'stat_groups_comparing': session.get('stat_groups_comparing', ''),
-                    'stat_relationship_vars_count': session.get('stat_relationship_vars_count', ''),
-                    'stat_data_type': session.get('stat_data_type', ''),
-                    'stat_data_normality': session.get('stat_data_normality', '')
-                }
-                df_sample = None
-                if uploaded_filepath:
-                    try: df_sample = pd.read_csv(uploaded_filepath, nrows=PRE_VALIDATION_SAMPLE_SIZE) if uploaded_filepath.endswith(".csv") else pd.read_excel(uploaded_filepath, nrows=PRE_VALIDATION_SAMPLE_SIZE)
-                    except Exception as e: print(f"Error reading sample for stat test suggestion: {e}")
-                recommended_tests = suggest_statistical_tests(user_answers_stats_complete, df_sample)
-                if recommended_tests:
-                     current_suggestions = [f"Tell me more about: {test['name']}" for test in recommended_tests]
+            if not current_suggestions and session.get('last_recommended_tests'):
+                current_suggestions = [f"Tell me more about: {test['name']}" for test in session['last_recommended_tests']]
             response_data = {"suggestions": current_suggestions + ["Restart statistical test questions", "Help Select Visualizations"]}
 
+    elif current_stat_state == 'stat_info_gathered':
+        if user_input_lower == "suggest other tests (back to list)":
+            recommended_tests = session.get('last_recommended_tests', [])
+            if recommended_tests:
+                bot_reply = "Based on your answers, here are some statistical tests you might consider:<br>"
+                test_suggestions_for_buttons = []
+                for test in recommended_tests:
+                    bot_reply += f"<br><strong>{test['name']}</strong>: <em>{test['reason']}</em>"
+                    test_suggestions_for_buttons.append(f"Tell me more about: {test['name']}")
 
-    elif current_stat_state == 'stat_info_gathered': 
-        bot_reply = "What would you like to do next regarding statistical tests for your data?"
-        response_data = {"suggestions": ["Suggest other tests (back to list)", "Restart statistical test questions", "Help Select Visualizations", "Show data summary"]}
-    
-    else: 
+                session['stat_test_questions_state'] = 'awaiting_test_detail_selection'
+                response_data = {"suggestions": test_suggestions_for_buttons + ["Restart statistical test questions", "Help Select Visualizations"]}
+            else:
+                bot_reply = "I seem to have lost track of the recommendations. Let's restart the questions."
+                session['stat_test_questions_state'] = 'asking_stat_question_type'
+                session['flow_type'] = 'statistical_tests'
+                response_data = {"suggestions": ["Comparing averages or counts between Groups?", "Looking for Relationships or Connections?", "Analyzing Trends or Patterns Over Time?", "Comparing Two Different Time Series?", "Just Describing a Single Variable or Group?"]}
+        
+        elif user_input_lower == "restart statistical test questions":
+            for key in ['stat_question_type', 'stat_groups_comparing', 'stat_relationship_vars_count', 'stat_data_type', 'stat_data_normality', 'last_recommended_tests']:
+                session.pop(key, None)
+            
+            session['stat_test_questions_state'] = 'asking_stat_question_type'
+            session['flow_type'] = 'statistical_tests'
+            
+            bot_reply = "Okay, let's figure out which statistical test might be suitable for your data!<br><br><strong>1. Broadly, what kind of statistical question are you trying to answer?</strong>"
+            response_data = {"suggestions": ["Comparing averages or counts between Groups?", "Looking for Relationships or Connections?", "Analyzing Trends or Patterns Over Time?", "Comparing Two Different Time Series?", "Just Describing a Single Variable or Group?"]}
+        
+        else:
+            bot_reply = "What would you like to do next regarding statistical tests for your data?"
+            response_data = {"suggestions": ["Suggest other tests (back to list)", "Restart statistical test questions", "Help Select Visualizations", "Show data summary"]}
+
+    else:
         bot_reply = "I seem to have lost my place in the statistical test questions for your data. Let's start over."
         session['stat_test_questions_state'] = 'asking_stat_question_type'
-        session['flow_type'] = 'statistical_tests' 
+        session['flow_type'] = 'statistical_tests'
         response_data = {"suggestions": ["Comparing averages or counts between Groups?", "Looking for Relationships or Connections?", "Analyzing Trends or Patterns Over Time?", "Comparing Two Different Time Series?", "Just Describing a Single Variable or Group?"]}
 
     return response_data, bot_reply
+
 
 def handle_learn_statistical_tests_flow(user_input, user_input_lower):
     response_data = {}
@@ -1305,7 +1312,10 @@ def handle_learn_statistical_tests_flow(user_input, user_input_lower):
         current_learn_stat_state = 'listing_tests' 
         bot_reply = f"Showing page {current_page + 1} of statistical tests:"
         
-    elif user_input_lower == "show list of tests again":
+    # === FIX IS HERE ===
+    # This now accepts the user's actual input "Suggest other tests (back to list)"
+    # as well as the original "Show list of tests again".
+    elif user_input_lower in ["show list of tests again", "suggest other tests (back to list)"]:
         session['stat_learn_state'] = 'listing_tests'
         session['stat_learn_test_list_page'] = 0 
         current_page = 0
@@ -1332,7 +1342,8 @@ def handle_learn_statistical_tests_flow(user_input, user_input_lower):
             
             session['stat_learn_state'] = 'showing_test_detail'
             session['current_test_for_learning'] = test_name_query
-            response_data["suggestions"] = ["Show list of tests again", "Back to main options"]
+            # It's good practice to make the suggestion here match the text you check for.
+            response_data["suggestions"] = ["Suggest other tests (back to list)", "Back to main options"]
             return response_data, bot_reply 
         else:
             bot_reply = f"Sorry, I don't have details for '{test_name_query}'. Please choose from the list."
@@ -1342,9 +1353,9 @@ def handle_learn_statistical_tests_flow(user_input, user_input_lower):
 
     if current_learn_stat_state == 'listing_tests':
         if not bot_reply: 
-             bot_reply = "Okay, let's learn about some statistical tests! Which one are you interested in?"
-             if session.get('stat_learn_test_list_page', 0) > 0 : 
-                 bot_reply = f"Showing page {session.get('stat_learn_test_list_page', 0) + 1} of statistical tests:"
+            bot_reply = "Okay, let's learn about some statistical tests! Which one are you interested in?"
+            if session.get('stat_learn_test_list_page', 0) > 0 : 
+                bot_reply = f"Showing page {session.get('stat_learn_test_list_page', 0) + 1} of statistical tests:"
 
         start_index = current_page * LEARN_TESTS_PAGE_SIZE
         end_index = start_index + LEARN_TESTS_PAGE_SIZE
@@ -1366,7 +1377,7 @@ def handle_learn_statistical_tests_flow(user_input, user_input_lower):
         if not bot_reply: 
             current_test_name = session.get('current_test_for_learning', 'the selected test')
             bot_reply = f"You are currently viewing details for: <strong>{current_test_name}</strong>."
-            response_data["suggestions"] = ["Show list of tests again", "Back to main options"]
+            response_data["suggestions"] = ["Suggest other tests (back to list)", "Back to main options"]
 
     else: 
         session['stat_learn_state'] = 'listing_tests'
