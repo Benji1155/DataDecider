@@ -10,14 +10,6 @@ from tensorflow.keras.models import load_model
 
 # --- Setup and Load Files ---
 
-# FIX: For deployment, it's more reliable to ensure the data is downloaded
-# during the startup phase rather than checking for it.
-print("Ensuring NLTK data is available for deployment...")
-nltk.download('punkt', quiet=True)
-nltk.download('wordnet', quiet=True)
-print("NLTK data check complete.")
-
-
 lemmatizer = WordNetLemmatizer()
 
 # Lazy-load the model and data files to avoid loading on every call
@@ -25,15 +17,39 @@ model = None
 words = None
 classes = None
 intents = None
+nltk_data_verified = False # Flag to ensure NLTK download is attempted only once
 
 # Get the absolute path to the directory where this script is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def load_nlu_resources():
-    """Loads all necessary NLU files into global variables using absolute paths."""
-    global model, words, classes, intents
+    """
+    Loads all necessary NLTK and Keras resources.
+    Includes a robust check for NLTK data for deployment environments.
+    """
+    global model, words, classes, intents, nltk_data_verified
+
+    # FIX: Check for NLTK data only once per application startup.
+    # This is more reliable for deployment environments.
+    if not nltk_data_verified:
+        try:
+            print("[INFO] Verifying NLTK data ('punkt', 'wordnet')...")
+            nltk.data.find('tokenizers/punkt')
+            nltk.data.find('corpora/wordnet')
+            print("[INFO] NLTK data found locally.")
+        except LookupError:
+            print("[INFO] NLTK data not found. Attempting to download...")
+            # Use non-quiet mode to see download progress or errors in logs
+            nltk.download('punkt', quiet=False)
+            nltk.download('wordnet', quiet=False)
+            print("[INFO] NLTK data download attempt complete.")
+        finally:
+            # Set flag to true regardless of outcome to prevent re-downloading on every request
+            nltk_data_verified = True
+            
+    # Load the ML model and other data files if they haven't been loaded yet
     if model is None:
-        print("[INFO] Loading NLU resources...")
+        print("[INFO] Loading ML model and data files...")
         try:
             # Construct absolute paths to the resource files
             model_path = os.path.join(BASE_DIR, 'chatbot_model.h5')
