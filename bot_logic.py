@@ -8,59 +8,54 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from tensorflow.keras.models import load_model
 
-# --- Setup and Load Files ---
-
-# FIX: Point NLTK to the local 'nltk_data' folder you created.
-# This is the most reliable method for deployment environments like Render.
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-nltk_data_path = os.path.join(BASE_DIR, 'nltk_data')
-nltk.data.path.append(nltk_data_path)
-
-print(f"[INFO] NLTK data path configured to: {nltk_data_path}")
-
+# --- Setup ---
+# NLTK will automatically find its data from the NLTK_DATA environment variable.
+# We no longer need to manually set paths in the code.
 lemmatizer = WordNetLemmatizer()
 
-# Lazy-load the model and data files
+# --- Lazy-load resources ---
 model = None
 words = None
 classes = None
 intents = None
+resources_loaded = False
 
 def load_nlu_resources():
-    """Loads all necessary NLTU files into global variables using absolute paths."""
-    global model, words, classes, intents
-    # The check for model is enough to see if resources are loaded
-    if model is None:
-        print("[INFO] Loading NLTK model and data files...")
-        try:
-            # Construct absolute paths to the resource files
-            model_path = os.path.join(BASE_DIR, 'chatbot_model.h5')
-            words_path = os.path.join(BASE_DIR, 'words.pkl')
-            classes_path = os.path.join(BASE_DIR, 'classes.pkl')
-            intents_path = os.path.join(BASE_DIR, 'intents.json')
+    """Loads all necessary NLU files. It only runs once."""
+    global model, words, classes, intents, resources_loaded
+    if resources_loaded:
+        return
 
-            model = load_model(model_path)
-            words = pickle.load(open(words_path, 'rb'))
-            classes = pickle.load(open(classes_path, 'rb'))
-            with open(intents_path, 'r', encoding='utf-8') as file:
-                intents = json.load(file)
-            print("[INFO] NLU resources loaded successfully.")
-        except Exception as e:
-            print(f"[ERROR] Failed to load NLU resources: {e}")
-            model, words, classes, intents = None, None, None, None
+    print("[INFO] Attempting to load NLTK model and data files...")
+    try:
+        # Get the absolute path to the directory where this script is located
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Construct absolute paths to the resource files
+        model_path = os.path.join(base_dir, 'chatbot_model.h5')
+        words_path = os.path.join(base_dir, 'words.pkl')
+        classes_path = os.path.join(base_dir, 'classes.pkl')
+        intents_path = os.path.join(base_dir, 'intents.json')
+
+        model = load_model(model_path)
+        words = pickle.load(open(words_path, 'rb'))
+        classes = pickle.load(open(classes_path, 'rb'))
+        with open(intents_path, 'r', encoding='utf-8') as file:
+            intents = json.load(file)
+            
+        resources_loaded = True
+        print("[INFO] NLU resources loaded successfully.")
+    except Exception as e:
+        print(f"[ERROR] A critical error occurred while loading NLU resources: {e}")
+        # Keep resources as None so the bot can report the issue
+        model, words, classes, intents = None, None, None, None
 
 # --- Core NLU Functions ---
 def clean_up_sentence(sentence):
     """Tokenizes and lemmatizes the sentence."""
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        raise RuntimeError("Required NLTK tokenizer data 'punkt' not found. Ensure nltk_data/tokenizers/punkt exists and is uploaded to your Render deployment.")
-
     sentence_words = word_tokenize(sentence)
     sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
     return sentence_words
-
 
 def bag_of_words(sentence, words):
     """Creates a bag-of-words array."""
@@ -75,6 +70,7 @@ def bag_of_words(sentence, words):
 def predict_class(sentence):
     """Predicts the intent for a given sentence."""
     if not all([model, words, classes]):
+        print("[ERROR] NLU resources not loaded. Cannot predict class.")
         return [] 
 
     bow = bag_of_words(sentence, words)
@@ -99,16 +95,17 @@ def get_response(intents_list, intents_json):
 # --- Main Function to be Called by app.py ---
 def get_bot_response(user_input):
     """Drives the NLU response generation."""
+    # Ensure resources are loaded, but only once.
     load_nlu_resources()
     
-    if model is None:
-        return "Sorry, my brain (NLU model) is not available. This could be an issue with loading the model files on the server."
+    if not resources_loaded:
+        return "Sorry, my core components failed to load. Please check the server logs for errors."
         
     try:
         intents_list = predict_class(user_input)
         response = get_response(intents_list, intents)
     except Exception as e:
-        print(f"[ERROR] An error occurred in get_bot_response: {e}")
+        print(f"[ERROR] An error occurred during prediction: {e}")
         response = "Oops, something went wrong on my end. Please try again."
 
     return response
