@@ -1618,12 +1618,31 @@ def landing():
     return render_template("landing_page.html")
 
 # Add this new route for your chat interface:
-@app.route("/chat") # Or whatever path you prefer for the chat
+@app.route("/chat")
 def chat_interface():
-    # This route now serves your existing chat interface (index.html)
-    # Session clearing for a fresh chat usually happens in the /get_response 
-    # or initial load of index.html's JavaScript, or when initiating a new chat session.
-    # Ensure you have an 'index.html' in your 'templates' folder for the chat interface.
+    # --- FIX IS HERE ---
+    # This route now clears all session data every time the chat page is loaded,
+    # ensuring a fresh start on every refresh or new visit.
+    keys_to_clear = [
+        'visualization_questions_state', 'stat_test_questions_state', 'flow_type',
+        'uploaded_filepath', 'uploaded_filename', 'df_columns',
+        'user_answer_variable_types', 'user_answer_visualization_message',
+        'user_answer_variable_count', 'user_answer_emphasis', 'user_answer_columns_of_interest',
+        'stat_question_type', 'stat_groups_comparing', 'stat_relationship_vars_count',
+        'stat_data_type', 'stat_data_normality', 'last_recommended_tests',
+        'chart_suggestions_list_actual', 'suggestion_batch_start_index',
+        'selected_chart_for_plotting', 'plotting_columns', 'last_plot_chart_type', 
+        'last_plot_columns', 'last_plot_custom_title', 'last_plot_custom_xlabel', 
+        'last_plot_custom_ylabel', 'last_plot_marker_style', 'last_plot_alpha_level', 
+        'last_plot_hue_marker_map', 'hue_category_to_customize_marker', 
+        'unique_hue_categories_for_marker', 'manual_columns_selected', 'last_suggestions',
+        'stat_learn_state', 'current_test_for_learning', 'viz_learn_state', 
+        'stat_learn_test_list_page', 'auto_mode_state'
+    ]
+    for key in keys_to_clear:
+        session.pop(key, None)
+        
+    # This now correctly renders the chat interface with a clean session.
     return render_template("index.html")
 
 # --- Flask Routes (Defined AFTER handler functions) ---
