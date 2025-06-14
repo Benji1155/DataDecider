@@ -10,15 +10,13 @@ from tensorflow.keras.models import load_model
 
 # --- Setup and Load Files ---
 
-# This function will attempt to download the data if it's not found.
-# On many hosting platforms, this might fail, which is the likely source of your error.
-try:
-    nltk.data.find('tokenizers/punkt')
-    nltk.data.find('corpora/wordnet')
-except LookupError:
-    print("Downloading required NLTK data for deployment...")
-    nltk.download('punkt', quiet=True)
-    nltk.download('wordnet', quiet=True)
+# FIX: For deployment, it's more reliable to ensure the data is downloaded
+# during the startup phase rather than checking for it.
+print("Ensuring NLTK data is available for deployment...")
+nltk.download('punkt', quiet=True)
+nltk.download('wordnet', quiet=True)
+print("NLTK data check complete.")
+
 
 lemmatizer = WordNetLemmatizer()
 
