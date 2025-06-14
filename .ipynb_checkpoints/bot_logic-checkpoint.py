@@ -4,17 +4,13 @@ import numpy as np
 import nltk
 import pickle
 import os
-import re # <-- Added the missing import
-from nltk.stem import WordNetLemmatizer
+import re
+from nltk.stem import PorterStemmer # <-- Use PorterStemmer
 from tensorflow.keras.models import load_model
 
 # --- Setup ---
-try:
-    nltk.data.find('corpora/wordnet')
-except LookupError:
-    nltk.download('wordnet', quiet=True)
-
-lemmatizer = WordNetLemmatizer()
+# Initialize the stemmer. It requires no extra downloads.
+stemmer = PorterStemmer()
 
 # --- Lazy-load resources ---
 model = None
@@ -31,7 +27,7 @@ def load_nlu_resources():
     if resources_loaded:
         return
 
-    print("[INFO] Attempting to load NLTK model and data files...")
+    print("[INFO] Attempting to load NLU model and data files...")
     try:
         model_path = os.path.join(BASE_DIR, 'chatbot_model.h5')
         words_path = os.path.join(BASE_DIR, 'words.pkl')
@@ -53,10 +49,10 @@ def load_nlu_resources():
 # --- Core NLU Functions ---
 def clean_up_sentence(sentence):
     """
-    Uses simple string splitting and lemmatization. No 'punkt' dependency.
+    FIX: Uses simple string splitting and the fast PorterStemmer.
     """
     sentence_words = re.sub(r"[^\w\s]", "", sentence).split()
-    sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
+    sentence_words = [stemmer.stem(word.lower()) for word in sentence_words]
     return sentence_words
 
 def bag_of_words(sentence, words):
