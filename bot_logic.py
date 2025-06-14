@@ -52,9 +52,15 @@ def load_nlu_resources():
 # --- Core NLU Functions ---
 def clean_up_sentence(sentence):
     """Tokenizes and lemmatizes the sentence."""
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        raise RuntimeError("Required NLTK tokenizer data 'punkt' not found. Ensure nltk_data/tokenizers/punkt exists and is uploaded to your Render deployment.")
+
     sentence_words = word_tokenize(sentence)
     sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
     return sentence_words
+
 
 def bag_of_words(sentence, words):
     """Creates a bag-of-words array."""
