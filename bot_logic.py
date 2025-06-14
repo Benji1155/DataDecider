@@ -10,46 +10,28 @@ from tensorflow.keras.models import load_model
 
 # --- Setup and Load Files ---
 
+# FIX: Point NLTK to the local 'nltk_data' folder you created.
+# This is the most reliable method for deployment environments like Render.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+nltk_data_path = os.path.join(BASE_DIR, 'nltk_data')
+nltk.data.path.append(nltk_data_path)
+
+print(f"[INFO] NLTK data path configured to: {nltk_data_path}")
+
 lemmatizer = WordNetLemmatizer()
 
-# Lazy-load the model and data files to avoid loading on every call
+# Lazy-load the model and data files
 model = None
 words = None
 classes = None
 intents = None
-nltk_data_verified = False # Flag to ensure NLTK download is attempted only once
-
-# Get the absolute path to the directory where this script is located
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def load_nlu_resources():
-    """
-    Loads all necessary NLTK and Keras resources.
-    Includes a robust check for NLTK data for deployment environments.
-    """
-    global model, words, classes, intents, nltk_data_verified
-
-    # FIX: Check for NLTK data only once per application startup.
-    # This is more reliable for deployment environments.
-    if not nltk_data_verified:
-        try:
-            print("[INFO] Verifying NLTK data ('punkt', 'wordnet')...")
-            nltk.data.find('tokenizers/punkt')
-            nltk.data.find('corpora/wordnet')
-            print("[INFO] NLTK data found locally.")
-        except LookupError:
-            print("[INFO] NLTK data not found. Attempting to download...")
-            # Use non-quiet mode to see download progress or errors in logs
-            nltk.download('punkt', quiet=False)
-            nltk.download('wordnet', quiet=False)
-            print("[INFO] NLTK data download attempt complete.")
-        finally:
-            # Set flag to true regardless of outcome to prevent re-downloading on every request
-            nltk_data_verified = True
-            
-    # Load the ML model and other data files if they haven't been loaded yet
+    """Loads all necessary NLTU files into global variables using absolute paths."""
+    global model, words, classes, intents
+    # The check for model is enough to see if resources are loaded
     if model is None:
-        print("[INFO] Loading ML model and data files...")
+        print("[INFO] Loading NLTK model and data files...")
         try:
             # Construct absolute paths to the resource files
             model_path = os.path.join(BASE_DIR, 'chatbot_model.h5')
@@ -60,27 +42,22 @@ def load_nlu_resources():
             model = load_model(model_path)
             words = pickle.load(open(words_path, 'rb'))
             classes = pickle.load(open(classes_path, 'rb'))
-            # Re-add the UTF-8 encoding for emojis
             with open(intents_path, 'r', encoding='utf-8') as file:
                 intents = json.load(file)
             print("[INFO] NLU resources loaded successfully.")
         except Exception as e:
             print(f"[ERROR] Failed to load NLU resources: {e}")
-            # Ensure all are None if any fails
             model, words, classes, intents = None, None, None, None
 
 # --- Core NLU Functions ---
-
 def clean_up_sentence(sentence):
-    """
-    Uses the same tokenization and lemmatization as the training script.
-    """
+    """Tokenizes and lemmatizes the sentence."""
     sentence_words = word_tokenize(sentence)
     sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
     return sentence_words
 
 def bag_of_words(sentence, words):
-    """Creates a bag-of-words array from the user's sentence."""
+    """Creates a bag-of-words array."""
     sentence_words = clean_up_sentence(sentence)
     bag = [0] * len(words)
     for s in sentence_words:
@@ -92,19 +69,18 @@ def bag_of_words(sentence, words):
 def predict_class(sentence):
     """Predicts the intent for a given sentence."""
     if not all([model, words, classes]):
-        return [] # Return empty if resources aren't loaded
+        return [] 
 
     bow = bag_of_words(sentence, words)
     res = model.predict(np.array([bow]), verbose=0)[0]
     
-    ERROR_THRESHOLD = 0.25 # Threshold to filter out weak predictions
+    ERROR_THRESHOLD = 0.25
     results = [[i, r] for i, r in enumerate(res) if r > ERROR_THRESHOLD]
     results.sort(key=lambda x: x[1], reverse=True)
-
     return [{"intent": classes[r[0]], "probability": str(r[1])} for r in results]
 
 def get_response(intents_list, intents_json):
-    """Gets a suitable response from the intents file."""
+    """Gets a response from the intents file."""
     if not intents_list or not intents_json:
         return "I'm not sure how to respond to that. Can you rephrase?"
 
@@ -115,16 +91,12 @@ def get_response(intents_list, intents_json):
     return "I'm not sure how to respond to that. Can you rephrase?"
 
 # --- Main Function to be Called by app.py ---
-
 def get_bot_response(user_input):
-    """
-    Drives the NLU response generation.
-    This is the only function that needs to be imported by app.py.
-    """
-    load_nlu_resources() # Ensure everything is loaded
+    """Drives the NLU response generation."""
+    load_nlu_resources()
     
     if model is None:
-        return "Sorry, my brain (NLU model) is not available right now. This is often due to an issue loading the model files on the server. Please check the server logs."
+        return "Sorry, my brain (NLU model) is not available. This could be an issue with loading the model files on the server."
         
     try:
         intents_list = predict_class(user_input)
