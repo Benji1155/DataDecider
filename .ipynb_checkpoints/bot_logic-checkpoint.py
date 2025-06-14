@@ -9,8 +9,8 @@ from nltk.tokenize import word_tokenize
 from tensorflow.keras.models import load_model
 
 # --- Setup ---
-# NLTK will automatically find its data from the NLTK_DATA environment variable.
-# We no longer need to manually set paths in the code.
+# NLTK will now automatically find its data from the NLTK_DATA environment variable.
+# We no longer need to manually set paths or download from within this script.
 lemmatizer = WordNetLemmatizer()
 
 # --- Lazy-load resources ---
@@ -95,7 +95,6 @@ def get_response(intents_list, intents_json):
 # --- Main Function to be Called by app.py ---
 def get_bot_response(user_input):
     """Drives the NLU response generation."""
-    # Ensure resources are loaded, but only once.
     load_nlu_resources()
     
     if not resources_loaded:
