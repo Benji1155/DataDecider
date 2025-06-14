@@ -4,22 +4,15 @@ import numpy as np
 import nltk
 import pickle
 import os
+import re # <-- Added the missing import
 from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
 from tensorflow.keras.models import load_model
 
 # --- Setup ---
-# FIX: Force NLTK to look for its data in the local 'nltk_data' folder.
-# This is the most reliable method for deployment environments.
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-nltk_data_path = os.path.join(BASE_DIR, 'nltk_data')
-
-# Check if the path is not already in the list to avoid duplicates
-if nltk_data_path not in nltk.data.path:
-    # Insert our local path at the beginning of the search list to give it priority
-    nltk.data.path.insert(0, nltk_data_path)
-
-print(f"[INFO] NLTK data path set to: {nltk_data_path}")
+try:
+    nltk.data.find('corpora/wordnet')
+except LookupError:
+    nltk.download('wordnet', quiet=True)
 
 lemmatizer = WordNetLemmatizer()
 
@@ -30,6 +23,8 @@ classes = None
 intents = None
 resources_loaded = False
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def load_nlu_resources():
     """Loads all necessary NLU files. It only runs once."""
     global model, words, classes, intents, resources_loaded
@@ -38,7 +33,6 @@ def load_nlu_resources():
 
     print("[INFO] Attempting to load NLTK model and data files...")
     try:
-        # Construct absolute paths to the resource files
         model_path = os.path.join(BASE_DIR, 'chatbot_model.h5')
         words_path = os.path.join(BASE_DIR, 'words.pkl')
         classes_path = os.path.join(BASE_DIR, 'classes.pkl')
@@ -54,13 +48,14 @@ def load_nlu_resources():
         print("[INFO] NLU resources loaded successfully.")
     except Exception as e:
         print(f"[ERROR] A critical error occurred while loading NLU resources: {e}")
-        # Keep resources as None so the bot can report the issue
         model, words, classes, intents = None, None, None, None
 
 # --- Core NLU Functions ---
 def clean_up_sentence(sentence):
-    """Tokenizes and lemmatizes the sentence."""
-    sentence_words = word_tokenize(sentence)
+    """
+    Uses simple string splitting and lemmatization. No 'punkt' dependency.
+    """
+    sentence_words = re.sub(r"[^\w\s]", "", sentence).split()
     sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
     return sentence_words
 
