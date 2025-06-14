@@ -9,8 +9,18 @@ from nltk.tokenize import word_tokenize
 from tensorflow.keras.models import load_model
 
 # --- Setup ---
-# NLTK will now automatically find its data from the NLTK_DATA environment variable.
-# We no longer need to manually set paths or download from within this script.
+# FIX: Force NLTK to look for its data in the local 'nltk_data' folder.
+# This is the most reliable method for deployment environments.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+nltk_data_path = os.path.join(BASE_DIR, 'nltk_data')
+
+# Check if the path is not already in the list to avoid duplicates
+if nltk_data_path not in nltk.data.path:
+    # Insert our local path at the beginning of the search list to give it priority
+    nltk.data.path.insert(0, nltk_data_path)
+
+print(f"[INFO] NLTK data path set to: {nltk_data_path}")
+
 lemmatizer = WordNetLemmatizer()
 
 # --- Lazy-load resources ---
@@ -28,14 +38,11 @@ def load_nlu_resources():
 
     print("[INFO] Attempting to load NLTK model and data files...")
     try:
-        # Get the absolute path to the directory where this script is located
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        
         # Construct absolute paths to the resource files
-        model_path = os.path.join(base_dir, 'chatbot_model.h5')
-        words_path = os.path.join(base_dir, 'words.pkl')
-        classes_path = os.path.join(base_dir, 'classes.pkl')
-        intents_path = os.path.join(base_dir, 'intents.json')
+        model_path = os.path.join(BASE_DIR, 'chatbot_model.h5')
+        words_path = os.path.join(BASE_DIR, 'words.pkl')
+        classes_path = os.path.join(BASE_DIR, 'classes.pkl')
+        intents_path = os.path.join(BASE_DIR, 'intents.json')
 
         model = load_model(model_path)
         words = pickle.load(open(words_path, 'rb'))
