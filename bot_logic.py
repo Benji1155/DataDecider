@@ -10,12 +10,13 @@ from tensorflow.keras.models import load_model
 
 # --- Setup and Load Files ---
 
-# Ensure NLTK data is available
+# This function will attempt to download the data if it's not found.
+# On many hosting platforms, this might fail, which is the likely source of your error.
 try:
     nltk.data.find('tokenizers/punkt')
     nltk.data.find('corpora/wordnet')
 except LookupError:
-    print("Downloading required NLTK data...")
+    print("Downloading required NLTK data for deployment...")
     nltk.download('punkt', quiet=True)
     nltk.download('wordnet', quiet=True)
 
@@ -37,7 +38,7 @@ def load_nlu_resources():
         print("[INFO] Loading NLU resources...")
         try:
             # Construct absolute paths to the resource files
-            model_path = os.path.join(BASE_DIR, 'chatbot_model.h5') # Use .h5 model
+            model_path = os.path.join(BASE_DIR, 'chatbot_model.h5')
             words_path = os.path.join(BASE_DIR, 'words.pkl')
             classes_path = os.path.join(BASE_DIR, 'classes.pkl')
             intents_path = os.path.join(BASE_DIR, 'intents.json')
@@ -45,6 +46,7 @@ def load_nlu_resources():
             model = load_model(model_path)
             words = pickle.load(open(words_path, 'rb'))
             classes = pickle.load(open(classes_path, 'rb'))
+            # Re-add the UTF-8 encoding for emojis
             with open(intents_path, 'r', encoding='utf-8') as file:
                 intents = json.load(file)
             print("[INFO] NLU resources loaded successfully.")
@@ -108,7 +110,7 @@ def get_bot_response(user_input):
     load_nlu_resources() # Ensure everything is loaded
     
     if model is None:
-        return "Sorry, my brain (NLU model) is not available right now. Please try again later."
+        return "Sorry, my brain (NLU model) is not available right now. This is often due to an issue loading the model files on the server. Please check the server logs."
         
     try:
         intents_list = predict_class(user_input)
