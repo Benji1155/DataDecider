@@ -20,6 +20,7 @@ from scipy.stats import skew, kurtosis # For more detailed stats
 # Ensure these imports are correct and files exist
 from bot_logic import get_bot_response as nlu_get_bot_response
 from test_explanations import STATISTICAL_TEST_DETAILS 
+from visualization_explanations import VISUALIZATION_DETAILS
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
@@ -27,8 +28,8 @@ app.config['UPLOAD_FOLDER'] = 'uploaded_files'
 app.config['ALLOWED_EXTENSIONS'] = {'csv', 'xls', 'xlsx'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-SUGGESTION_BATCH_SIZE = 3
-PRE_VALIDATION_SAMPLE_SIZE = 30 # Used for df.head() in auto-mode summary
+SUGGESTION_BATCH_SIZE = 4
+PRE_VALIDATION_SAMPLE_SIZE = 30
 
 # --- Suggestion Lists ---
 DESIRED_INITIAL_SUGGESTIONS_NO_DATA = [
@@ -1397,34 +1398,49 @@ def handle_learn_statistical_tests_flow(user_input, user_input_lower):
     return response_data, bot_reply
 
 def handle_learn_visualization_flow(user_input, user_input_lower):
+    """
+    Handles the conversation flow for learning about visualizations.
+    This version directly shows the chart options.
+    """
     response_data = {}
     bot_reply = ""
-    current_learn_viz_state = session.get('viz_learn_state') 
-
+    
+    # Handle an exit command at any point
     if user_input_lower == "back to main options":
         session.pop('flow_type', None)
-        session.pop('viz_learn_state', None)
-        bot_reply = "Okay, back to the main options. What would you like to do?"
+        bot_reply = "Okay, back to the main options."
         if session.get('uploaded_filepath'):
             response_data["suggestions"] = list(SUGGESTIONS_WITH_DATA_LOADED)
         else:
             response_data["suggestions"] = list(DESIRED_INITIAL_SUGGESTIONS_NO_DATA)
         return response_data, bot_reply
 
-    if current_learn_viz_state == 'viz_overview':
-        if user_input_lower == "common chart types (placeholder)":
-             bot_reply = "Common chart types include Bar Charts (for comparisons of categorical data), Line Charts (for trends over time), Pie Charts (for proportions of a whole), Histograms (for distribution of numerical data), Scatter Plots (for relationships between two numerical variables), and more. Each has specific use cases. <br><br> (This section is a placeholder - more details to come!)"
-             response_data["suggestions"] = ["Choosing the Right Chart (placeholder)", "Back to main options"] 
-        elif user_input_lower == "choosing the right chart (placeholder)":
-            bot_reply = "Choosing the right chart depends on what you want to show: <br> - For <strong>comparison</strong>: Bar chart, Grouped bar chart. <br> - For <strong>distribution</strong>: Histogram, Box plot, Density plot. <br> - For <strong>relationship</strong>: Scatter plot, Heatmap. <br> - For <strong>composition</strong>: Pie chart, Stacked bar chart. <br> - For <strong>trends</strong>: Line chart, Area chart. <br><br> (This section is a placeholder - more details to come!)"
-            response_data["suggestions"] = ["Common Chart Types (placeholder)", "Back to main options"]
-        else: 
-            bot_reply = "This section will guide you through various visualization techniques. What aspect of visualization are you curious about first? (This section is under development)"
-            response_data["suggestions"] = ["Common Chart Types (placeholder)", "Choosing the Right Chart (placeholder)", "Back to main options"]
-    else: 
-        session['viz_learn_state'] = 'viz_overview'
-        bot_reply = "Let's explore data visualization! What would you like to know? (This section is under development)"
-        response_data["suggestions"] = ["Common Chart Types (placeholder)", "Choosing the Right Chart (placeholder)", "Back to main options"]
+    # Check if the user's input is one of the visualization names
+    # This handles the case where the user clicks a suggestion button.
+    viz_details = VISUALIZATION_DETAILS.get(user_input)
+    
+    if viz_details:
+        # If the user selected a specific chart, show the details.
+        bot_reply = f"<h3>{viz_details['title']}</h3>"
+        bot_reply += f"<p><strong>What it is:</strong> {viz_details['description']}</p><br>"
+        bot_reply += "<strong>When to use it:</strong><ul>"
+        for item in viz_details['when_to_use']:
+            bot_reply += f"<li>{item}</li>"
+        bot_reply += "</ul><br>"
+        bot_reply += f"<strong>Example:</strong><p>{viz_details['example']}</p>"
+        
+        # Provide options to go back to the list or exit the flow.
+        response_data["suggestions"] = ["Show list of visualizations", "Back to main options"]
+        return response_data, bot_reply
+
+    # Default action: Show the list of visualizations.
+    # This is triggered on the first entry or when the user clicks "Show list of visualizations".
+    bot_reply = "Let's explore data visualization! Which of these common charts would you like to learn about?"
+    
+    # The suggestions are now just the names of the charts.
+    suggestions = list(VISUALIZATION_DETAILS.keys())
+    suggestions.append("Back to main options")
+    response_data["suggestions"] = suggestions
     
     return response_data, bot_reply
 
@@ -1726,8 +1742,8 @@ def get_response():
         elif user_input_lower == "learn about visualization":
             session['flow_type'] = 'learn_visualization'
             session['viz_learn_state'] = 'viz_overview' 
-            bot_reply = "This section will guide you through various visualization techniques. What aspect of visualization are you curious about first? (This section is under development)"
-            response_data["suggestions"] = ["Common Chart Types (placeholder)", "Choosing the Right Chart (placeholder)", "Back to main options"]
+            bot_reply = "This section will guide you through various visualization techniques. What aspect of visualization are you curious about first?"
+            response_data["suggestions"] = ["Common Chart Types", "Back to main options"]
         
         elif user_input_lower == "upload data" or user_input_lower == "upload data to get analysis suggestions": 
             bot_reply = "Please use the 'Upload File' button (or the upload area if available on the page) to upload your data."
